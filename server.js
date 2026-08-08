@@ -11,35 +11,28 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static assets from 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// GAME ENGINE STATE
-let gameState = 'waiting'; // 'waiting' | 'flying' | 'crashed'
+let gameState = 'waiting';
 let currentMultiplier = 1.00;
 let crashPoint = 1.00;
 let roundNumber = 1;
-let history = [1.45, 2.10, 1.12, 5.40, 1.85, 3.20]; // Default starter history
-let activeBets = new Map(); // socket.id -> { amount, cashedOut, name }
+let history = [1.45, 2.10, 1.12, 5.40, 1.85, 3.20];
+let activeBets = new Map();
 let gameTimer = null;
 let startTime = 0;
 
-const WAITING_TIME = 7000; // 7 seconds waiting time between rounds
+const WAITING_TIME = 7000;
 
-// Weighted Random Crash Point Generator
 function generateCrashPoint() {
     const r = Math.random() * 100;
-    // 3% instant crash chance at 1.00x
     if (r < 3) return 1.00;
-    
-    // Standard crash curve algorithm
     const e = 100;
     const h = Math.random() * (e - 1);
     let val = Math.floor((100 * e) / (e - h)) / 100;
     return Math.min(Math.max(val, 1.01), 120.00);
 }
 
-// 1. WAITING PHASE
 function startWaitingPhase() {
     gameState = 'waiting';
     currentMultiplier = 1.00;
@@ -60,7 +53,6 @@ function startWaitingPhase() {
     }, WAITING_TIME);
 }
 
-// 2. FLYING PHASE
 function startFlyingPhase() {
     gameState = 'flying';
     crashPoint = generateCrashPoint();
@@ -71,11 +63,8 @@ function startFlyingPhase() {
 
     io.emit('round:start', { roundNumber });
 
-    // 50ms server ticks for ultra-smooth multiplier updates
     gameTimer = setInterval(() => {
         const elapsedSec = (Date.now() - startTime) / 1000;
-        
-        // Authentic Aviator multiplier progression curve
         currentMultiplier = Number((Math.pow(1.07, elapsedSec * 1.5)).toFixed(2));
 
         if (currentMultiplier >= crashPoint) {
@@ -86,13 +75,11 @@ function startFlyingPhase() {
     }, 50);
 }
 
-// 3. CRASH PHASE
 function triggerCrash() {
     clearInterval(gameTimer);
     gameState = 'crashed';
     currentMultiplier = crashPoint;
 
-    // Add to history (keep max 25 entries)
     history.push(Number(crashPoint.toFixed(2)));
     if (history.length > 25) history.shift();
 
@@ -108,25 +95,22 @@ function triggerCrash() {
     }, 3500);
 }
 
-// SOCKET.IO REAL-TIME CONNECTIONS
 io.on('connection', (socket) => {
     socket.playerName = 'Guest Pilot';
 
-    // Send history on join
     socket.emit('init:history', { history });
 
-    // Send current round state if joining mid-game
     if (gameState === 'waiting') {
         socket.emit('round:waiting', { roundNumber, duration: WAITING_TIME });
     }
 
-    // 🟢 LISTEN: Player logs in
+    // 🟢 LOGS LOGIN NAME IN RENDER TERMINAL
     socket.on('player:login', (data) => {
         socket.playerName = (data && data.name) ? data.name.trim() : 'Pilot';
         console.log(`🟢 [LOGIN] Player "${socket.playerName}" logged in! (Socket ID: ${socket.id})`);
     });
 
-    // 💰 LISTEN: Place Bet
+    // 💰 LOGS BET IN RENDER TERMINAL
     socket.on('bet:place', (amount) => {
         if (gameState !== 'waiting') return;
         const betAmt = parseInt(amount, 10);
@@ -142,7 +126,6 @@ io.on('connection', (socket) => {
         socket.emit('bet:confirmed', { amount: betAmt });
     });
 
-    // ❌ LISTEN: Cancel Bet
     socket.on('bet:cancel', () => {
         if (gameState !== 'waiting') return;
         const playerBet = activeBets.get(socket.id);
@@ -153,7 +136,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 🎉 LISTEN: Cash Out
+    // 🎉 LOGS CASHOUT IN RENDER TERMINAL
     socket.on('bet:cashout', () => {
         if (gameState !== 'flying') return;
         const playerBet = activeBets.get(socket.id);
@@ -171,14 +154,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 🔴 LISTEN: Disconnect / Tab Close
     socket.on('disconnect', () => {
         console.log(`🔴 [DISCONNECT] Player "${socket.playerName}" left the game.`);
         activeBets.delete(socket.id);
     });
 });
 
-// START EXPRESS SERVER & GAME LOOP
 server.listen(PORT, () => {
     console.log(`\n========================================`);
     console.log(`🚀 AVIATOR PRO SERVER LIVE ON PORT ${PORT}`);
