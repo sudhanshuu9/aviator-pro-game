@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aviator Pro — Master Edition</title>
   
-  <!-- Socket.IO Client Library -->
   <script src="/socket.io/socket.io.js"></script>
 
   <style>
@@ -23,10 +22,7 @@
       --text-secondary: #94a3b8;
     }
 
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
       margin: 0;
@@ -56,13 +52,8 @@
       text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
     }
 
-    .sub {
-      color: var(--text-secondary);
-      font-size: 12px;
-      margin-bottom: 12px;
-    }
+    .sub { color: var(--text-secondary); font-size: 12px; margin-bottom: 12px; }
 
-    /* LOGIN MODAL OVERLAY */
     #loginModal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -86,41 +77,13 @@
       text-align: center;
     }
 
-    .login-card h2 {
-      margin: 0 0 6px;
-      font-size: 24px;
-      font-weight: 900;
-      color: #fff;
-      letter-spacing: 1.5px;
-      text-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
-    }
+    .login-card h2 { margin: 0 0 6px; font-size: 24px; font-weight: 900; color: #fff; letter-spacing: 1.5px; }
+    .login-card p { margin: 0 0 20px; font-size: 13px; color: var(--text-secondary); }
 
-    .login-card p {
-      margin: 0 0 20px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; }
 
-    .form-group {
-      margin-bottom: 16px;
-      text-align: left;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
 
     .login-input {
       width: 100%;
@@ -132,633 +95,146 @@
       font-size: 15px;
       font-weight: 600;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .login-input:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 14px rgba(0, 210, 255, 0.4);
     }
 
     .eye-btn {
-      position: absolute;
-      right: 10px;
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 18px;
-      cursor: pointer;
-      padding: 4px;
-      min-height: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.2s;
+      position: absolute; right: 10px; background: none; border: none; color: var(--text-secondary); font-size: 18px; cursor: pointer;
     }
 
-    .eye-btn:hover { color: var(--accent-blue); }
-
     .pass-hint {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent-gold);
-      background: rgba(255, 183, 3, 0.12);
-      border: 1px dashed rgba(255, 183, 3, 0.35);
-      padding: 6px 10px;
-      border-radius: 8px;
-      margin-top: 6px;
-      display: inline-block;
+      font-size: 12px; font-weight: 700; color: var(--accent-gold); background: rgba(255, 183, 3, 0.12);
+      border: 1px dashed rgba(255, 183, 3, 0.35); padding: 6px 10px; border-radius: 8px; margin-top: 6px; display: inline-block;
     }
 
     .login-btn {
-      width: 100%;
-      margin-top: 10px;
-      background: linear-gradient(135deg, #00d2ff, #00e676);
-      color: #020617;
-      font-weight: 900;
-      font-size: 16px;
-      letter-spacing: 1px;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
-      transition: transform 0.1s, box-shadow 0.2s;
+      width: 100%; margin-top: 10px; background: linear-gradient(135deg, #00d2ff, #00e676);
+      color: #020617; font-weight: 900; font-size: 16px; border: none; border-radius: 12px; padding: 14px; cursor: pointer;
     }
 
-    .login-btn:active { transform: scale(0.97); }
+    .error-text { color: var(--accent-red); font-size: 12px; font-weight: 700; margin-top: 10px; display: none; }
 
-    .error-text {
-      color: var(--accent-red);
-      font-size: 12px;
-      font-weight: 700;
-      margin-top: 10px;
-      display: none;
-    }
-
-    /* MAIN BOARD DISPLAY */
     .board {
-      width: 100%;
-      max-width: 980px;
-      background: var(--panel-bg);
-      backdrop-filter: blur(28px);
-      border: 1px solid var(--panel-border);
-      box-shadow: 0 30px 65px rgba(0, 0, 0, 0.85), inset 0 1px 2px rgba(255, 255, 255, 0.15);
-      border-radius: 24px;
-      padding: clamp(14px, 3vw, 24px);
+      width: 100%; max-width: 980px; background: var(--panel-bg); backdrop-filter: blur(28px);
+      border: 1px solid var(--panel-border); border-radius: 24px; padding: clamp(14px, 3vw, 24px);
     }
 
     .balance-bar {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-secondary);
-      font-size: 13px;
-      margin-bottom: 10px;
-      font-weight: 700;
-      background: rgba(0, 0, 0, 0.45);
-      padding: 10px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
+      color: var(--text-secondary); font-size: 13px; margin-bottom: 10px; font-weight: 700;
+      background: rgba(0, 0, 0, 0.45); padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .balance-bar b { color: var(--accent-gold); }
     .player-tag { color: var(--accent-blue); font-weight: 800; font-size: 14px; }
 
     .topup-btn {
-      background: rgba(0, 210, 255, 0.15);
-      border: 1px solid rgba(0, 210, 255, 0.35);
-      color: var(--accent-blue);
-      font-size: 11px;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      min-height: auto;
-      transition: all 0.2s;
-    }
-
-    .topup-btn:hover {
-      background: var(--accent-blue);
-      color: #000;
+      background: rgba(0, 210, 255, 0.15); border: 1px solid rgba(0, 210, 255, 0.35); color: var(--accent-blue);
+      font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer;
     }
 
     .download-btn {
       background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(0, 210, 255, 0.2));
-      border: 1px solid rgba(168, 85, 247, 0.5);
-      color: var(--accent-purple);
-      font-size: 11px;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      min-height: auto;
-      transition: all 0.2s;
-      margin-left: 4px;
+      border: 1px solid rgba(168, 85, 247, 0.5); color: var(--accent-purple); font-size: 11px; font-weight: 800;
+      padding: 4px 10px; border-radius: 8px; cursor: pointer; margin-left: 4px;
     }
 
-    .download-btn:hover {
-      background: var(--accent-purple);
-      color: #fff;
-      box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
-    }
+    .top-timer-wrapper { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .top-timer-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #ff2a55, #00d2ff); transition: width 0.05s linear; }
 
-    /* TOP CENTER TIMER LINE */
-    .top-timer-wrapper {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .top-timer-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #ff2a55, #00d2ff);
-      box-shadow: 0 0 10px #ff2a55;
-      transition: width 0.05s linear;
-    }
-
-    /* CANVAS CONTAINER */
     .canvas-container {
-      position: relative;
-      width: 100%;
-      height: clamp(280px, 48vh, 480px);
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid rgba(0, 210, 255, 0.3);
-      box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 210, 255, 0.15);
+      position: relative; width: 100%; height: clamp(280px, 48vh, 480px); border-radius: 18px; overflow: hidden;
+      border: 1px solid rgba(0, 210, 255, 0.3); box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.7);
     }
 
-    #canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+    #canvas { width: 100%; height: 100%; display: block; }
 
-    .multiplier {
-      text-align: center;
-      font-size: clamp(44px, 8.5vw, 68px);
-      font-weight: 900;
-      margin: 12px 0 2px;
-      letter-spacing: -1.5px;
-      text-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
-    }
+    .multiplier { text-align: center; font-size: clamp(44px, 8.5vw, 68px); font-weight: 900; margin: 12px 0 2px; }
+    .status { text-align: center; color: var(--text-secondary); font-size: 13px; height: 18px; margin-bottom: 10px; font-weight: 600; }
 
-    .status {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 13px;
-      height: 18px;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-
-    /* PLANE CRASH HISTORY STRIP */
     .plane-history-strip {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(0, 210, 255, 0.25);
-      border-radius: 14px;
-      padding: 8px 12px;
-      margin-bottom: 12px;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
-      overflow: hidden;
+      display: flex; align-items: center; gap: 10px; background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(0, 210, 255, 0.25); border-radius: 14px; padding: 8px 12px; margin-bottom: 12px; overflow: hidden;
     }
 
-    .plane-history-label {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
+    .plane-history-label { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; white-space: nowrap; }
+    .plane-history-pills { display: flex; gap: 8px; align-items: center; overflow-x: auto; width: 100%; padding-bottom: 2px; }
 
-    .plane-history-pills {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      overflow-x: auto;
-      width: 100%;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 210, 255, 0.4) transparent;
-      padding-bottom: 2px;
-    }
+    .history-pill { font-size: 13px; font-weight: 900; padding: 4px 12px; border-radius: 16px; white-space: nowrap; flex-shrink: 0; }
+    .pill-blue { background: rgba(0, 210, 255, 0.18); border: 1px solid rgba(0, 210, 255, 0.45); color: var(--accent-blue); }
+    .pill-green { background: rgba(0, 230, 118, 0.18); border: 1px solid rgba(0, 230, 118, 0.45); color: var(--accent-green); }
+    .pill-gold { background: rgba(255, 183, 3, 0.22); border: 1px solid rgba(255, 183, 3, 0.65); color: var(--accent-gold); }
 
-    .plane-history-pills::-webkit-scrollbar {
-      height: 4px;
-    }
-
-    .plane-history-pills::-webkit-scrollbar-thumb {
-      background: rgba(0, 210, 255, 0.4);
-      border-radius: 4px;
-    }
-
-    .history-pill {
-      font-size: 13px;
-      font-weight: 900;
-      padding: 4px 12px;
-      border-radius: 16px;
-      letter-spacing: 0.5px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .pill-blue {
-      background: rgba(0, 210, 255, 0.18);
-      border: 1px solid rgba(0, 210, 255, 0.45);
-      color: var(--accent-blue);
-    }
-
-    .pill-green {
-      background: rgba(0, 230, 118, 0.18);
-      border: 1px solid rgba(0, 230, 118, 0.45);
-      color: var(--accent-green);
-    }
-
-    .pill-gold {
-      background: rgba(255, 183, 3, 0.22);
-      border: 1px solid rgba(255, 183, 3, 0.65);
-      color: var(--accent-gold);
-      box-shadow: 0 0 12px rgba(255, 183, 3, 0.4);
-    }
-
-    /* LIVE PROFIT BADGE ABOVE CASHOUT */
-    .live-profit-box {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 8px;
-      height: 38px;
-    }
-
+    .live-profit-box { display: flex; justify-content: flex-end; margin-bottom: 8px; height: 38px; }
     .profit-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, rgba(0, 230, 118, 0.25), rgba(0, 176, 255, 0.25));
-      border: 2px solid rgba(0, 230, 118, 0.7);
-      color: var(--accent-green);
-      font-size: 16px;
-      font-weight: 900;
-      padding: 6px 20px;
-      border-radius: 24px;
-      box-shadow: 0 0 20px rgba(0, 230, 118, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.4);
-      visibility: hidden;
-      opacity: 0;
-      transform: scale(0.95);
-      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(0, 230, 118, 0.25), rgba(0, 176, 255, 0.25));
+      border: 2px solid rgba(0, 230, 118, 0.7); color: var(--accent-green); font-size: 16px; font-weight: 900; padding: 6px 20px; border-radius: 24px;
+      visibility: hidden; opacity: 0; transition: opacity 0.2s ease;
     }
+    .profit-pill.active { visibility: visible; opacity: 1; }
 
-    .profit-pill.active {
-      visibility: visible;
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    /* BET & CASHOUT BUTTONS */
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 12px;
-      width: 100%;
-    }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; width: 100%; }
 
     input[type=number] {
-      flex: 1 1 120px;
-      min-width: 0;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: var(--text-primary);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 16px;
-      font-weight: 800;
-      outline: none;
-      min-height: 52px;
-      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+      flex: 1 1 120px; min-width: 0; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-primary); border-radius: 14px; padding: 12px 14px; font-size: 16px; font-weight: 800; outline: none; min-height: 52px;
     }
 
-    input[type=number]:focus {
-      border-color: var(--accent-gold);
-      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5), 0 0 12px rgba(255, 183, 3, 0.4);
-    }
+    button { border: none; border-radius: 14px; padding: 12px 18px; font-size: 16px; font-weight: 900; cursor: pointer; min-height: 52px; touch-action: manipulation; }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 18px;
-      font-size: 16px;
-      font-weight: 900;
-      cursor: pointer;
-      min-height: 52px;
-      touch-action: manipulation;
-      transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s;
-    }
+    .bet-btn { background: linear-gradient(135deg, #ff2a55, #c026d3); color: white; flex: 1 1 120px; min-width: 0; }
+    .cancel-btn { background: linear-gradient(135deg, #dc2626, #991b1b) !important; color: #ffffff !important; flex: 1 1 120px; min-width: 0; }
+    .cashout-btn { background: linear-gradient(135deg, #00e676, #00b0ff); color: #020617; flex: 1 1 120px; min-width: 0; }
 
-    button:active { transform: scale(0.96); }
-    button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+    .quick-bets { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .quick-bet-btn { flex: 1 1 60px; min-height: 40px; padding: 6px 8px; background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; border-radius: 12px; font-size: 13px; font-weight: 800; }
 
-    .bet-btn {
-      background: linear-gradient(135deg, #ff2a55, #c026d3);
-      color: white;
-      flex: 1 1 120px;
-      min-width: 0;
-      box-shadow: 0 6px 25px rgba(255, 42, 85, 0.45), inset 0 1px 1px rgba(255,255,255,0.3);
-    }
+    .auto-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .auto-card { display: flex; flex-direction: column; gap: 10px; background: linear-gradient(145deg, rgba(18, 26, 47, 0.9), rgba(10, 15, 30, 0.9)); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; padding: 12px 16px; }
+    .auto-card-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+    .auto-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--text-primary); }
 
-    .cancel-btn {
-      background: linear-gradient(135deg, #dc2626, #991b1b) !important;
-      color: #ffffff !important;
-      flex: 1 1 120px;
-      min-width: 0;
-      box-shadow: 0 6px 25px rgba(220, 38, 38, 0.6) !important;
-    }
-
-    .cashout-btn {
-      background: linear-gradient(135deg, #00e676, #00b0ff);
-      color: #020617;
-      flex: 1 1 120px;
-      min-width: 0;
-      box-shadow: 0 6px 25px rgba(0, 230, 118, 0.45), inset 0 1px 1px rgba(255,255,255,0.4);
-    }
-
-    .quick-bets {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .quick-bet-btn {
-      flex: 1 1 60px;
-      min-height: 40px;
-      padding: 6px 8px;
-      background: linear-gradient(145deg, #1e293b, #0f172a);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #e2e8f0;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 800;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
-      transition: all 0.15s ease;
-    }
-
-    .quick-bet-btn:hover, .quick-bet-btn:active {
-      background: linear-gradient(135deg, var(--accent-blue), #0284c7);
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
-    }
-
-    /* AUTO PANEL */
-    .auto-panel {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .auto-card {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: linear-gradient(145deg, rgba(18, 26, 47, 0.9), rgba(10, 15, 30, 0.9));
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 16px;
-      padding: 12px 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.08);
-    }
-
-    .auto-card-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      gap: 8px;
-    }
-
-    .auto-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: var(--text-primary);
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 46px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-
+    .switch { position: relative; display: inline-block; width: 46px; height: 24px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .25s ease; border-radius: 34px; border: 1px solid rgba(255, 255, 255, 0.18); }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .25s ease; border-radius: 50%; }
 
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #334155;
-      transition: .25s ease;
-      border-radius: 34px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-    }
+    input:checked + .slider-bet { background: linear-gradient(135deg, #00e676, #10b981); }
+    input:checked + .slider-cashout { background: linear-gradient(135deg, #ffb703, #fb8c00); }
+    input:checked + .slider:before { transform: translateX(22px); }
 
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 16px;
-      width: 16px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .25s ease;
-      border-radius: 50%;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-    }
+    .preset-group { display: flex; gap: 4px; flex-wrap: wrap; }
+    .preset-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-secondary); border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
 
-    input:checked + .slider-bet {
-      background: linear-gradient(135deg, #00e676, #10b981);
-      box-shadow: 0 0 14px rgba(0, 230, 118, 0.6);
-    }
+    .progress-panel { background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(3, 7, 18, 0.95)); border: 1px solid rgba(0, 210, 255, 0.22); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+    .progress-header { font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: var(--accent-blue); text-transform: uppercase; margin-bottom: 12px; }
+    .progress-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .progress-card { background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .p-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
+    .p-val { font-size: 16px; font-weight: 900; }
+    .pl-positive { color: var(--accent-green); } .pl-negative { color: var(--accent-red); } .pl-neutral { color: var(--text-primary); }
+    .p-stars { font-size: 18px; color: var(--accent-gold); }
 
-    input:checked + .slider-cashout {
-      background: linear-gradient(135deg, #ffb703, #fb8c00);
-      box-shadow: 0 0 14px rgba(255, 183, 3, 0.6);
-    }
+    .history-table-container { background: rgba(8, 12, 22, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px; padding: 10px; max-height: 160px; overflow-y: auto; }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+    .history-table th { color: var(--text-secondary); padding: 6px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-weight: 800; text-transform: uppercase; }
+    .history-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); font-weight: 700; }
+    .badge-win { color: var(--accent-green); background: rgba(0, 230, 118, 0.14); padding: 2px 8px; border-radius: 6px; font-weight: 800; }
+    .badge-loss { color: var(--accent-red); background: rgba(255, 42, 85, 0.14); padding: 2px 8px; border-radius: 6px; font-weight: 800; }
 
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-
-    .preset-group {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-
-    .preset-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-secondary);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 11px;
-      font-weight: 800;
-      min-height: auto;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .preset-btn:hover, .preset-btn:active {
-      background: var(--accent-gold);
-      color: #000;
-    }
-
-    /* USER PROGRESS DASHBOARD */
-    .progress-panel {
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(3, 7, 18, 0.95));
-      border: 1px solid rgba(0, 210, 255, 0.22);
-      border-radius: 18px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-    }
-
-    .progress-header {
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      color: var(--accent-blue);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .progress-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-    }
-
-    .progress-card {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .p-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-    }
-
-    .p-val {
-      font-size: 16px;
-      font-weight: 900;
-    }
-
-    .pl-positive { color: var(--accent-green); }
-    .pl-negative { color: var(--accent-red); }
-    .pl-neutral { color: var(--text-primary); }
-
-    .p-stars {
-      font-size: 18px;
-      letter-spacing: 2px;
-      color: var(--accent-gold);
-      text-shadow: 0 0 10px rgba(255, 183, 3, 0.6);
-    }
-
-    /* HISTORY TABLE */
-    .history-table-container {
-      background: rgba(8, 12, 22, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      padding: 10px;
-      max-height: 160px;
-      overflow-y: auto;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
-    }
-
-    .history-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      text-align: left;
-    }
-
-    .history-table th {
-      color: var(--text-secondary);
-      padding: 6px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .history-table td {
-      padding: 6px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-weight: 700;
-    }
-
-    .badge-win {
-      color: var(--accent-green);
-      background: rgba(0, 230, 118, 0.14);
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-weight: 800;
-    }
-
-    .badge-loss {
-      color: var(--accent-red);
-      background: rgba(255, 42, 85, 0.14);
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-weight: 800;
-    }
-
-    footer {
-      color: var(--text-secondary);
-      font-size: 11px;
-      margin-top: 16px;
-      text-align: center;
-    }
+    footer { color: var(--text-secondary); font-size: 11px; margin-top: 16px; text-align: center; }
   </style>
 </head>
 <body>
 
-<!-- LOGIN MODAL -->
 <div id="loginModal">
   <div class="login-card">
     <h2>AVIATOR PRO</h2>
     <p>Enter details to access training demo</p>
-    
     <div class="form-group">
       <label>Player Name</label>
       <input type="text" id="playerNameInput" class="login-input" placeholder="e.g. Maverick" value="Pilot">
     </div>
-
     <div class="form-group">
       <label>Password</label>
       <div class="input-wrapper">
@@ -767,7 +243,6 @@
       </div>
       <div class="pass-hint">pass= prince0102</div>
     </div>
-
     <button class="login-btn" onclick="attemptLogin()">START GAME</button>
     <div id="loginError" class="error-text">Invalid Password! Try again.</div>
   </div>
@@ -786,7 +261,6 @@
     </span>
   </div>
 
-  <!-- TOP CENTER TIMER LINE -->
   <div class="top-timer-wrapper">
     <div class="top-timer-fill" id="topTimerFill"></div>
   </div>
@@ -798,16 +272,12 @@
   <div class="multiplier" id="multiplierText">1.00x</div>
   <div class="status" id="statusText">Login to place your bet</div>
 
-  <!-- PLANE CRASH MULTIPLIER HISTORY STRIP -->
   <div class="plane-history-strip">
     <div class="plane-history-label">History:</div>
     <button class="topup-btn" style="margin-right: 4px; padding: 2px 8px; font-size: 10px;" onclick="openHistoryModal()">📜 Stats (25)</button>
-    <div class="plane-history-pills" id="planeHistoryPills">
-      <!-- Dynamic history pills will render here -->
-    </div>
+    <div class="plane-history-pills" id="planeHistoryPills"></div>
   </div>
 
-  <!-- LIVE PROFIT BADGE -->
   <div class="live-profit-box">
     <div class="profit-pill" id="liveProfitPill">
       <span>Profit:</span>
@@ -821,7 +291,6 @@
     <button class="cashout-btn" id="cashoutBtn" disabled>Cash Out</button>
   </div>
 
-  <!-- ADDITIVE QUICK BETS -->
   <div class="quick-bets">
     <button class="quick-bet-btn" onclick="addBet(100)">+100</button>
     <button class="quick-bet-btn" onclick="addBet(250)">+250</button>
@@ -831,13 +300,10 @@
     <button class="quick-bet-btn" style="border-color: rgba(255, 42, 85, 0.4); color: var(--accent-red);" onclick="resetBet()">Reset</button>
   </div>
 
-  <!-- AUTO PANEL -->
   <div class="auto-panel">
     <div class="auto-card">
       <div class="auto-card-row">
-        <div class="auto-title">
-          <span style="color:var(--accent-green);">⚡</span> AUTO BET
-        </div>
+        <div class="auto-title"><span style="color:var(--accent-green);">⚡</span> AUTO BET</div>
         <label class="switch">
           <input type="checkbox" id="autoBetToggle" disabled>
           <span class="slider slider-bet"></span>
@@ -847,9 +313,7 @@
 
     <div class="auto-card">
       <div class="auto-card-row">
-        <div class="auto-title">
-          <span style="color:var(--accent-gold);">🎯</span> AUTO CASHOUT
-        </div>
+        <div class="auto-title"><span style="color:var(--accent-gold);">🎯</span> AUTO CASHOUT</div>
         <label class="switch">
           <input type="checkbox" id="autoCashoutToggle" disabled>
           <span class="slider slider-cashout"></span>
@@ -868,11 +332,8 @@
     </div>
   </div>
 
-  <!-- USER PROGRESS DASHBOARD -->
   <div class="progress-panel">
-    <div class="progress-header">
-      <span>🏆 USER PROGRESS & ACHIEVEMENTS</span>
-    </div>
+    <div class="progress-header"><span>🏆 USER PROGRESS & ACHIEVEMENTS</span></div>
     <div class="progress-grid">
       <div class="progress-card">
         <span class="p-label">Net Profit / Loss</span>
@@ -892,40 +353,26 @@
   <div class="history-table-container">
     <table class="history-table">
       <thead>
-        <tr>
-          <th>Round</th>
-          <th>Bet</th>
-          <th>Multiplier</th>
-          <th>Result</th>
-          <th>Payout</th>
-        </tr>
+        <tr><th>Round</th><th>Bet</th><th>Multiplier</th><th>Result</th><th>Payout</th></tr>
       </thead>
-      <tbody id="historyTableBody">
-        <!-- Dynamic History Rows -->
-      </tbody>
+      <tbody id="historyTableBody"></tbody>
     </table>
   </div>
 </div>
 
-<!-- 25-ROUND HISTORY MODAL OVERLAY -->
 <div id="historyModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(3,7,18,0.88); backdrop-filter:blur(12px); z-index:2000; align-items:center; justify-content:center; padding:16px;">
-  <div style="background:linear-gradient(145deg, #0f172a, #020617); border:1px solid rgba(0, 210, 255, 0.35); border-radius:20px; padding:20px; width:100%; max-width:400px; box-shadow:0 20px 50px rgba(0,0,0,0.95);">
+  <div style="background:linear-gradient(145deg, #0f172a, #020617); border:1px solid rgba(0, 210, 255, 0.35); border-radius:20px; padding:20px; width:100%; max-width:400px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
       <h3 style="margin:0; font-size:15px; font-weight:900; color:var(--accent-blue);">📜 Last 25 Rounds History</h3>
-      <button onclick="closeHistoryModal()" style="background:none; border:none; color:var(--text-secondary); font-size:22px; cursor:pointer; min-height:auto; padding:0;">✕</button>
+      <button onclick="closeHistoryModal()" style="background:none; border:none; color:var(--text-secondary); font-size:22px; cursor:pointer;">✕</button>
     </div>
-    <div id="modalHistoryGrid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; max-height:280px; overflow-y:auto; padding-right:4px;">
-      <!-- Dynamic 25 history grid items -->
-    </div>
+    <div id="modalHistoryGrid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; max-height:280px; overflow-y:auto;"></div>
   </div>
 </div>
 
-<footer>
-  Client-side demo built with Node.js & Canvas.
-</footer>
+<footer>Client-side demo built with Node.js & Canvas.</footer>
 
 <script>
-// GLOBAL STATE
 const socket = io();
 
 let targetMultiplier = 1.0;
@@ -942,30 +389,12 @@ let isLoggedIn = false;
 let demoBalance = 10000;
 let currentBetAmount = 0;
 
-// SOUND MUTE TOGGLE
 let isMuted = false;
-
-// USER PROGRESS METRICS
-let totalPlayed = 0;
-let totalWins = 0;
-let totalLosses = 0;
-let cumulativeNetPL = 0;
-
-// PLANE MULTIPLIER HISTORY (UP TO 25)
+let totalPlayed = 0, totalWins = 0, totalLosses = 0, cumulativeNetPL = 0;
 let planeHistory = [];
-
-// REAL-TIME CANVAS PIXEL COORDINATES
-let livePlaneCanvasX = 0;
-let livePlaneCanvasY = 0;
-
-// THUNDERSTORM & PROCEDURAL EXPLOSION STATE
-let triggerLightningFX = false;
-let lightningAlpha = 0;
-let explosionParticles = [];
-let shockwaveRadius = 0;
-
-let topTimerInterval = null;
-let audioCtx = null;
+let livePlaneCanvasX = 0, livePlaneCanvasY = 0;
+let triggerLightningFX = false, lightningAlpha = 0, explosionParticles = [], shockwaveRadius = 0;
+let topTimerInterval = null, audioCtx = null;
 
 const canvasContainer = document.getElementById('canvasContainer');
 const canvas = document.getElementById('canvas');
@@ -994,84 +423,37 @@ const topTimerFill = document.getElementById('topTimerFill');
 const playerGreetingDisplay = document.getElementById('playerGreetingDisplay');
 const soundToggleBtn = document.getElementById('soundToggleBtn');
 
-function togglePasswordView() {
-    passInput.type = passInput.type === 'password' ? 'text' : 'password';
-}
+function togglePasswordView() { passInput.type = passInput.type === 'password' ? 'text' : 'password'; }
 
 function attemptLogin() {
     const name = document.getElementById('playerNameInput').value.trim() || 'Pilot';
     const pass = passInput.value.trim();
-    const errEl = document.getElementById('loginError');
-
     if (pass === 'prince0102') {
         isLoggedIn = true;
-
-        // SEND PLAYER NAME TO SERVER FOR LIVE LOGGING
         socket.emit('player:login', { name: name });
-
         document.getElementById('loginModal').style.display = 'none';
         playerGreetingDisplay.textContent = `Heyy ${name} . Let's gooo`;
         statusText.textContent = 'Betting open — place your bet';
-        
-        betBtn.disabled = false;
-        autoBetToggle.disabled = false;
-        autoCashoutToggle.disabled = false;
-
+        betBtn.disabled = false; autoBetToggle.disabled = false; autoCashoutToggle.disabled = false;
         unlockAudio();
     } else {
-        errEl.style.display = 'block';
+        document.getElementById('loginError').style.display = 'block';
     }
 }
 
-function topUpBalance() {
-    demoBalance = 10000;
-    balanceEl.textContent = demoBalance;
-    statusText.textContent = 'Balance topped up to ₹10,000!';
-}
-
-function triggerDownload() {
-    statusText.textContent = 'Preparing Aviator Pro App Download...';
-    alert('📥 Aviator Pro App Client setup initiated!');
-}
-
-function addBet(amt) {
-    let current = parseInt(betInput.value, 10) || 0;
-    betInput.value = current + amt;
-}
-
-function resetBet() {
-    betInput.value = 100;
-}
-
+function topUpBalance() { demoBalance = 10000; balanceEl.textContent = demoBalance; statusText.textContent = 'Balance topped up to ₹10,000!'; }
+function triggerDownload() { alert('📥 Aviator Pro App Client setup initiated!'); }
+function addBet(amt) { betInput.value = (parseInt(betInput.value, 10) || 0) + amt; }
+function resetBet() { betInput.value = 100; }
 function setPreset(val) { autoCashoutInput.value = val.toFixed(1); }
 
-// MUTE / UNMUTE CONTROLLER
 function toggleMute() {
     isMuted = !isMuted;
     soundToggleBtn.textContent = isMuted ? '🔇 Muted' : '🔊 Sound On';
-    
-    [startMusic, explodeMusic, winMusic].forEach(s => {
-        if (s) s.muted = isMuted;
-    });
-
-    if (isMuted) {
-        if (startMusic) startMusic.pause();
-        if (explodeMusic) explodeMusic.pause();
-        if (winMusic) winMusic.pause();
-    } else {
-        if (running && isLoggedIn && audioUnlocked) {
-            startMusic.volume = 0.45;
-            startMusic.play().catch(e => console.log('Audio resume error'));
-        }
-    }
 }
 
-function openHistoryModal() {
-    document.getElementById('historyModal').style.display = 'flex';
-}
-function closeHistoryModal() {
-    document.getElementById('historyModal').style.display = 'none';
-}
+function openHistoryModal() { document.getElementById('historyModal').style.display = 'flex'; }
+function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
 
 function resizeCanvas(){
     canvas.width = canvas.clientWidth * devicePixelRatio;
@@ -1080,382 +462,50 @@ function resizeCanvas(){
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// PLANE2.PNG LOADING
+// GUARANTEED IMAGE RELOAD FORCE CACHE FIX
 const plane2Img = new Image();
 plane2Img.src = '/images/plane2.png?v=' + Date.now();
 plane2Img.onload = () => { drawFrame(); };
 
-// AUDIO SETUP
-const startMusic = new Audio('start-music.mpeg');
-startMusic.loop = true; 
-
+const startMusic = new Audio('start-music.mpeg'); startMusic.loop = true;
 const explodeMusic = new Audio('explosion-sound.mpeg');
-
 let winMusic = new Audio('winningsound.mpeg');
-winMusic.addEventListener('error', () => {
-    winMusic.src = 'winning-sound.mpeg'; 
-});
 
 let audioUnlocked = false;
-
 function unlockAudio() {
     if (!audioUnlocked && isLoggedIn) {
         try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        } catch(e) { console.log('AudioContext init error:', e); }
-
-        [startMusic, explodeMusic, winMusic].forEach(sound => {
-            sound.load();
-            sound.muted = true;
-            sound.play().then(() => {
-                sound.pause();
-                sound.currentTime = 0;
-                sound.muted = isMuted;
-            }).catch(() => {
-                sound.muted = isMuted;
-            });
-        });
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        } catch(e){}
         audioUnlocked = true;
     }
 }
 
-function playCashoutSoundSynthesized() {
-    if (isMuted) return;
-    if (!audioCtx) unlockAudio();
-    if (!audioCtx) return;
-
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-
-    const now = audioCtx.currentTime;
-
-    const osc1 = audioCtx.createOscillator();
-    const gain1 = audioCtx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(523.25, now);
-    osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
-    gain1.gain.setValueAtTime(0.3, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-    osc1.connect(gain1);
-    gain1.connect(audioCtx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.4);
-
-    const osc2 = audioCtx.createOscillator();
-    const gain2 = audioCtx.createGain();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(659.25, now + 0.1);
-    osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.35);
-    gain2.gain.setValueAtTime(0.35, now + 0.1);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-    osc2.connect(gain2);
-    gain2.connect(audioCtx.destination);
-    osc2.start(now + 0.1);
-    osc2.stop(now + 0.5);
-}
-
 function renderPlaneHistoryUI() {
     planeHistoryPills.innerHTML = '';
-    
     const newestFirst = planeHistory.slice().reverse();
-
     newestFirst.forEach(m => {
         const pill = document.createElement('span');
-        pill.className = 'history-pill ';
-        
-        if (m >= 10.0) {
-            pill.className += 'pill-gold';
-        } else if (m >= 2.0) {
-            pill.className += 'pill-green';
-        } else {
-            pill.className += 'pill-blue';
-        }
-        
+        pill.className = 'history-pill ' + (m >= 10.0 ? 'pill-gold' : m >= 2.0 ? 'pill-green' : 'pill-blue');
         pill.textContent = m.toFixed(2) + 'x';
         planeHistoryPills.appendChild(pill);
     });
-
-    planeHistoryPills.scrollLeft = 0;
-    renderModalHistoryGrid(newestFirst);
 }
 
-function renderModalHistoryGrid(newestFirst) {
-    const grid = document.getElementById('modalHistoryGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    
-    newestFirst.slice(0, 25).forEach(m => {
-        const item = document.createElement('div');
-        item.className = 'history-pill ';
-        if (m >= 10.0) item.className += 'pill-gold';
-        else if (m >= 2.0) item.className += 'pill-green';
-        else item.className += 'pill-blue';
-        
-        item.style.textAlign = 'center';
-        item.style.padding = '6px 2px';
-        item.style.fontSize = '12px';
-        item.textContent = m.toFixed(2) + 'x';
-        grid.appendChild(item);
-    });
-}
-
-// FIXED: SMOOTH CONTINUOUS ASCENT ACROSS ALL MULTIPLIERS (NO FLAT 3.50x THRESHOLD)
+// SMOOTH LOGARITHMIC CURVE SCALING
 function valueToY(h, m){
     const runwayY = h - (28 * devicePixelRatio); 
     const topMargin = 70 * devicePixelRatio;
     if (m <= 1.01) return runwayY;
-    
     const maxAscent = runwayY - topMargin;
-    // Smooth, smooth curve that continuously climbs without ever flattening out abruptly
     const progress = Math.min(0.92, (m - 1.00) / (m + 2.50));
     return runwayY - (progress * maxAscent);
 }
 
-// FIXED: NATURAL CONTINUOUS PITCH ANGLE
 function getFlightAngle(m) {
     if (m <= 1.01) return 0;
-    const pitch = Math.min(0.35, ((m - 1.00) / (m + 2.50)) * 0.50);
-    return -pitch;
-}
-
-function updateProgressUI() {
-    if (cumulativeNetPL > 0) {
-        pNetPLEl.textContent = `+₹${cumulativeNetPL}`;
-        pNetPLEl.className = 'p-val pl-positive';
-    } else if (cumulativeNetPL < 0) {
-        pNetPLEl.textContent = `-₹${Math.abs(cumulativeNetPL)}`;
-        pNetPLEl.className = 'p-val pl-negative';
-    } else {
-        pNetPLEl.textContent = `₹0`;
-        pNetPLEl.className = 'p-val pl-neutral';
-    }
-
-    const winRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
-    pWinRateEl.textContent = `${winRate}%`;
-
-    let starStr = '☆☆☆';
-    if (totalWins >= 10 && (totalLosses / Math.max(1, totalPlayed)) < 0.5) {
-        starStr = '⭐⭐⭐';
-    } else if (totalWins >= 5) {
-        starStr = '⭐⭐☆';
-    } else if (totalLosses >= 6 || (totalPlayed >= 5 && totalLosses >= 3)) {
-        starStr = '⭐☆☆';
-    } else if (totalWins >= 1) {
-        starStr = '⭐☆☆';
-    }
-
-    pStarsEl.textContent = starStr;
-}
-
-function triggerExplosionFX(x, y) {
-    explosionParticles = [];
-    shockwaveRadius = 5 * devicePixelRatio;
-    
-    for (let i = 0; i < 50; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = (1.2 + Math.random() * 5) * devicePixelRatio; 
-        explosionParticles.push({
-            x: x,
-            y: y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            size: (5 + Math.random() * 9) * devicePixelRatio,
-            alpha: 1.0,
-            decay: 0.012 + Math.random() * 0.01, 
-            color: Math.random() > 0.4 ? '#ff2a55' : (Math.random() > 0.5 ? '#ffb703' : '#ffffff')
-        });
-    }
-}
-
-function drawProceduralExplosion(ctx) {
-    if (shockwaveRadius <= 0) return;
-
-    if (shockwaveRadius < 140 * devicePixelRatio) {
-        ctx.save();
-        ctx.strokeStyle = `rgba(255, 42, 85, ${Math.max(0, 1 - shockwaveRadius / (140 * devicePixelRatio))})`;
-        ctx.lineWidth = 4 * devicePixelRatio;
-        ctx.beginPath();
-        ctx.arc(livePlaneCanvasX, livePlaneCanvasY, shockwaveRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-        shockwaveRadius += 2.5 * devicePixelRatio; 
-    }
-
-    if (explosionParticles.length > 0 && explosionParticles[0].alpha > 0.05) {
-        const coreGrad = ctx.createRadialGradient(
-            livePlaneCanvasX, livePlaneCanvasY, 0,
-            livePlaneCanvasX, livePlaneCanvasY, 75 * devicePixelRatio
-        );
-        coreGrad.addColorStop(0, '#ffffff');
-        coreGrad.addColorStop(0.3, '#ffb703');
-        coreGrad.addColorStop(0.7, '#ff2a55');
-        coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
-
-        ctx.save();
-        ctx.fillStyle = coreGrad;
-        ctx.beginPath();
-        ctx.arc(livePlaneCanvasX, livePlaneCanvasY, 75 * devicePixelRatio, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-
-    for (let p of explosionParticles) {
-        if (p.alpha <= 0) continue;
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 12 * devicePixelRatio;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        p.x += p.vx;
-        p.y += p.vy;
-        p.alpha -= p.decay;
-    }
-}
-
-function drawSmokyStormClouds(ctx, w, horizonY) {
-    const time = Date.now() * 0.0006;
-    ctx.save();
-
-    const skyCloudGrad = ctx.createLinearGradient(0, 0, 0, horizonY * 0.65);
-    skyCloudGrad.addColorStop(0, 'rgba(8, 6, 16, 0.98)');
-    skyCloudGrad.addColorStop(0.5, 'rgba(18, 14, 32, 0.88)');
-    skyCloudGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = skyCloudGrad;
-    ctx.fillRect(0, 0, w, horizonY * 0.65);
-
-    const cloudColors = ['rgba(15, 12, 25, 0.88)', 'rgba(28, 20, 42, 0.72)', 'rgba(12, 10, 20, 0.94)'];
-    
-    for (let layer = 0; layer < 3; layer++) {
-        ctx.fillStyle = cloudColors[layer];
-        const drift = Math.sin(time + layer) * (20 * devicePixelRatio);
-        
-        ctx.beginPath();
-        for (let x = -50 * devicePixelRatio; x <= w + 50 * devicePixelRatio; x += 60 * devicePixelRatio) {
-            const puffRadius = (55 + Math.sin(x * 0.01 + layer) * 20) * devicePixelRatio;
-            const puffY = (15 + layer * 18 + Math.cos(x * 0.02 + drift) * 10) * devicePixelRatio;
-            ctx.arc(x + drift, puffY, puffRadius, 0, Math.PI * 2);
-        }
-        ctx.fill();
-    }
-
-    if (running && Math.random() < 0.04) {
-        ctx.fillStyle = 'rgba(236, 72, 153, 0.22)';
-        ctx.fillRect(0, 0, w, horizonY * 0.55);
-    }
-
-    ctx.restore();
-}
-
-function drawAnimatedOcean(ctx, w, h, horizonY, camX) {
-    const oceanGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-    oceanGrad.addColorStop(0, '#0369a1');
-    oceanGrad.addColorStop(0.4, '#0c4a6e');
-    oceanGrad.addColorStop(1, '#051923');
-    ctx.fillStyle = oceanGrad;
-    ctx.fillRect(0, horizonY, w, h - horizonY);
-
-    const time = Date.now() * 0.003;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 1.5 * devicePixelRatio;
-
-    for (let row = 1; row <= 4; row++) {
-        const yPos = horizonY + (row * 14 * devicePixelRatio);
-        if (yPos >= h) break;
-        ctx.beginPath();
-        for (let x = 0; x <= w; x += 18 * devicePixelRatio) {
-            const waveY = yPos + Math.sin((x + camX + time * 120 * row) * 0.02) * (2 * row * devicePixelRatio);
-            if (x === 0) ctx.moveTo(x, waveY);
-            else ctx.lineTo(x, waveY);
-        }
-        ctx.stroke();
-    }
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 2 * devicePixelRatio;
-    ctx.beginPath();
-    ctx.moveTo(0, horizonY);
-    ctx.lineTo(w, horizonY);
-    ctx.stroke();
-}
-
-function drawPinkLightning(ctx, endX, endY) {
-    ctx.save();
-    const startX = endX - (30 * devicePixelRatio) + (Math.random() * 60 * devicePixelRatio);
-    const startY = 10 * devicePixelRatio;
-
-    ctx.fillStyle = `rgba(236, 72, 153, ${lightningAlpha})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = '#ec4899';
-    ctx.lineWidth = 5 * devicePixelRatio;
-    ctx.shadowColor = '#ff007f';
-    ctx.shadowBlur = 25 * devicePixelRatio;
-    ctx.beginPath();
-    
-    let curX = startX;
-    let curY = startY;
-    ctx.moveTo(curX, curY);
-    
-    const segments = 10;
-    for (let i = 1; i <= segments; i++) {
-        const nextY = startY + (endY - startY) * (i / segments);
-        const nextX = startX + (endX - startX) * (i / segments) + (Math.random() - 0.5) * 45 * devicePixelRatio;
-        ctx.lineTo(nextX, nextY);
-        curX = nextX;
-        curY = nextY;
-    }
-    ctx.lineTo(endX, endY);
-    ctx.stroke();
-
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2 * devicePixelRatio;
-    ctx.stroke();
-    ctx.restore();
-}
-
-function drawSpectators(ctx, x, y, isFlying) {
-    const time = Date.now() * 0.008;
-    const bounce1 = isFlying ? Math.abs(Math.sin(time * 2)) * (10 * devicePixelRatio) : 0;
-    const bounce2 = isFlying ? Math.abs(Math.sin(time * 2 + 1.2)) * (10 * devicePixelRatio) : 0;
-    const armWiggle = isFlying ? Math.sin(time * 3) * 0.4 : 0;
-
-    ctx.save();
-    ctx.translate(x, y - bounce1);
-    ctx.fillStyle = '#fbcfe8';
-    ctx.beginPath(); ctx.arc(0, -32 * devicePixelRatio, 4.5 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ec4899'; ctx.fillRect(-3.5 * devicePixelRatio, -26 * devicePixelRatio, 7 * devicePixelRatio, 10 * devicePixelRatio);
-    ctx.fillStyle = '#db2777'; ctx.fillRect(-3.5 * devicePixelRatio, -15 * devicePixelRatio, 7 * devicePixelRatio, 6 * devicePixelRatio);
-    ctx.fillStyle = '#fbcfe8';
-    ctx.fillRect(-3 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
-    ctx.fillRect(0.5 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
-    ctx.strokeStyle = '#fbcfe8'; ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath();
-    ctx.moveTo(-3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(-8 * devicePixelRatio, (-34 + armWiggle * 5) * devicePixelRatio);
-    ctx.moveTo(3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(8 * devicePixelRatio, (-34 - armWiggle * 5) * devicePixelRatio);
-    ctx.stroke(); ctx.restore();
-
-    ctx.save();
-    ctx.translate(x + (16 * devicePixelRatio), y - bounce2);
-    ctx.fillStyle = '#fde047';
-    ctx.beginPath(); ctx.arc(0, -32 * devicePixelRatio, 4.5 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#18181b'; ctx.fillRect(-3.5 * devicePixelRatio, -26 * devicePixelRatio, 7 * devicePixelRatio, 10 * devicePixelRatio);
-    ctx.fillStyle = '#09090b'; ctx.fillRect(-3.5 * devicePixelRatio, -15 * devicePixelRatio, 7 * devicePixelRatio, 6 * devicePixelRatio);
-    ctx.fillStyle = '#fde047';
-    ctx.fillRect(-3 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
-    ctx.fillRect(0.5 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
-    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath();
-    ctx.moveTo(-3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(-8 * devicePixelRatio, (-34 - armWiggle * 5) * devicePixelRatio);
-    ctx.moveTo(3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(8 * devicePixelRatio, (-34 + armWiggle * 5) * devicePixelRatio);
-    ctx.stroke(); ctx.restore();
+    return -Math.min(0.35, ((m - 1.00) / (m + 2.50)) * 0.50);
 }
 
 function drawFrame() {
@@ -1463,111 +513,39 @@ function drawFrame() {
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // 60 FPS Multiplier Smooth Lerp
     if (running) {
-        displayMultiplier += (targetMultiplier - displayMultiplier) * 0.25;
-        const showVal = displayMultiplier <= 1.02 ? 1.00 : displayMultiplier;
-        multiplierText.textContent = showVal.toFixed(2) + 'x';
-
-        if (isLoggedIn && betPlaced && !cashedOut) {
-            const potentialPayout = Math.floor(currentBetAmount * displayMultiplier);
-            const liveProfit = potentialPayout - currentBetAmount;
-            liveProfitVal.textContent = `+₹${Math.max(0, liveProfit)}`;
-            liveProfitPill.classList.add('active');
-        }
+        displayMultiplier += (targetMultiplier - displayMultiplier) * 0.2;
+        multiplierText.textContent = (displayMultiplier <= 1.02 ? 1.00 : displayMultiplier).toFixed(2) + 'x';
     }
 
     let camX = 0;
-    const speedFactor = 1.8; // FIXED: CONSTANT SPEEDFACTOR TO PREVENT KINKS AT 3.50x
+    const speedFactor = 1.8;
     if (points.length > 0 && (running || triggerLightningFX)) {
         const last = points[points.length - 1];
         const maxT = Math.max(10000, last.t + 1000); 
         const worldX = (last.t / maxT) * (w * speedFactor);
-        if (worldX > w * 0.45) {
-            camX = worldX - (w * 0.45); 
-        }
+        if (worldX > w * 0.45) camX = worldX - (w * 0.45); 
     }
 
     const horizonY = h * 0.82;
     const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
-    skyGrad.addColorStop(0, '#0284c7');   
-    skyGrad.addColorStop(0.4, '#38bdf8'); 
-    skyGrad.addColorStop(0.7, '#fdba74'); 
-    skyGrad.addColorStop(0.9, '#f97316'); 
-    skyGrad.addColorStop(1, '#ea580c');   
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, w, horizonY);
-
-    const sunX = (w * 0.45) - (camX * 0.1); 
-    const sunGrad = ctx.createRadialGradient(sunX, horizonY, 3 * devicePixelRatio, sunX, horizonY, 75 * devicePixelRatio);
-    sunGrad.addColorStop(0, '#ffffff');
-    sunGrad.addColorStop(0.2, 'rgba(254, 240, 138, 0.9)');
-    sunGrad.addColorStop(0.6, 'rgba(249, 115, 22, 0.4)');
-    sunGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
-    ctx.fillStyle = sunGrad;
-    ctx.beginPath();
-    ctx.arc(sunX, horizonY, 75 * devicePixelRatio, 0, Math.PI * 2);
-    ctx.fill();
-
-    drawSmokyStormClouds(ctx, w, horizonY);
-    drawAnimatedOcean(ctx, w, h, horizonY, camX);
-
-    const runwayX = -camX;
-    const runwayWidth = 220 * devicePixelRatio;
-    const runwayHeight = 18 * devicePixelRatio;
-    const runwayY = h - runwayHeight - (8 * devicePixelRatio);
-
-    if (runwayX + runwayWidth > -50) {
-        ctx.fillStyle = '#064e3b';
-        for (let x = runwayX; x < runwayX + runwayWidth; x += 6 * devicePixelRatio) {
-            const treeH = (18 + (Math.abs(x) % 11) * 2.4) * devicePixelRatio;
-            ctx.beginPath();
-            ctx.moveTo(x, horizonY);
-            ctx.lineTo(x + 3.5 * devicePixelRatio, horizonY - treeH);
-            ctx.lineTo(x + 7 * devicePixelRatio, horizonY);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath();
-        ctx.roundRect(runwayX, runwayY, runwayWidth, runwayHeight, [0, 8 * devicePixelRatio, 8 * devicePixelRatio, 0]);
-        ctx.fill();
-
-        ctx.strokeStyle = '#f8fafc';
-        ctx.lineWidth = 2 * devicePixelRatio;
-        ctx.setLineDash([10 * devicePixelRatio, 10 * devicePixelRatio]);
-        ctx.beginPath();
-        ctx.moveTo(runwayX + 8 * devicePixelRatio, runwayY + runwayHeight / 2);
-        ctx.lineTo(runwayX + runwayWidth - 12 * devicePixelRatio, runwayY + runwayHeight / 2);
-        ctx.stroke();
-        ctx.setLineDash([]); 
-
-        drawSpectators(ctx, runwayX + (40 * devicePixelRatio), runwayY - (8 * devicePixelRatio), running);
-    }
+    skyGrad.addColorStop(0, '#0284c7'); skyGrad.addColorStop(1, '#ea580c');   
+    ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, w, horizonY);
 
     if (points.length === 0) return;
-
     const last = points[points.length - 1];
     const maxT = Math.max(10000, last.t + 1000); 
 
-    // CALCULATE JET TARGET POSITION
-    const worldX = (last.t / maxT) * (w * speedFactor);
-    const planeX = worldX - camX;
+    const planeX = ((last.t / maxT) * (w * speedFactor)) - camX;
     const planeY = valueToY(h, last.m);
 
-    livePlaneCanvasX = planeX;
-    livePlaneCanvasY = planeY;
+    livePlaneCanvasX = planeX; livePlaneCanvasY = planeY;
 
-    // FIXED: CONTINUOUS SMOOTH RED TRAJECTORY LINE
+    // SMOOTH 60FPS RED TRAJECTORY LINE
     if (running) {
         ctx.save();
         ctx.strokeStyle = '#ff2a55';
         ctx.lineWidth = 4 * devicePixelRatio;
-        ctx.lineCap = 'round';
-        ctx.shadowColor = '#ff2a55';
-        ctx.shadowBlur = 14 * devicePixelRatio;
-        
         ctx.beginPath();
         for (let i = 0; i < points.length; i++) {
             const p = points[i];
@@ -1580,344 +558,58 @@ function drawFrame() {
         ctx.restore();
     }
 
-    // JET SPRITE & FLAME
+    // DRAW PLANE WITH STRICT RENDER SIZE (PREVENTS JUMPING)
     if (running) {
         const angle = getFlightAngle(last.m);
-
-        const planeW = 95 * devicePixelRatio;
-        const planeH = 95 * devicePixelRatio;
-
-        const tailX = -planeW * 0.42;
-        const tailY = planeH * 0.04;
+        const planeW = 90 * devicePixelRatio;
+        const planeH = 90 * devicePixelRatio;
 
         ctx.save();
         ctx.translate(planeX, planeY);
         ctx.rotate(angle);
 
-        const flameLen = (34 + Math.random() * 16) * devicePixelRatio;
-
-        const outerFlame = ctx.createLinearGradient(tailX - flameLen, tailY, tailX, tailY);
-        outerFlame.addColorStop(0, 'rgba(239, 68, 68, 0)');
-        outerFlame.addColorStop(0.5, 'rgba(249, 115, 22, 0.85)');
-        outerFlame.addColorStop(1, 'rgba(253, 224, 71, 1)');
-
-        ctx.fillStyle = outerFlame;
-        ctx.beginPath();
-        ctx.moveTo(tailX + (4 * devicePixelRatio), tailY - (6 * devicePixelRatio));
-        ctx.lineTo(tailX - flameLen, tailY);
-        ctx.lineTo(tailX + (4 * devicePixelRatio), tailY + (6 * devicePixelRatio));
-        ctx.closePath();
-        ctx.fill();
-
-        const coreFlame = ctx.createLinearGradient(tailX - (flameLen * 0.5), tailY, tailX, tailY);
-        coreFlame.addColorStop(0, 'rgba(56, 189, 248, 0)');
-        coreFlame.addColorStop(1, 'rgba(255, 255, 255, 1)');
-
-        ctx.fillStyle = coreFlame;
-        ctx.beginPath();
-        ctx.moveTo(tailX + (2 * devicePixelRatio), tailY - (2.5 * devicePixelRatio));
-        ctx.lineTo(tailX - (flameLen * 0.5), tailY);
-        ctx.lineTo(tailX + (2 * devicePixelRatio), tailY + (2.5 * devicePixelRatio));
-        ctx.closePath();
-        ctx.fill();
-
         if (plane2Img.complete && plane2Img.naturalWidth > 0) {
             ctx.drawImage(plane2Img, -planeW/2, -planeH/2, planeW, planeH);
         } else {
-            ctx.font = `${58 * devicePixelRatio}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.font = `${50 * devicePixelRatio}px sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText('✈️', 0, 0);
         }
         ctx.restore();
     }
-
-    // EXPLOSION & LIGHTNING FX
-    if (triggerLightningFX && lightningAlpha > 0) {
-        drawPinkLightning(ctx, livePlaneCanvasX, livePlaneCanvasY);
-        drawProceduralExplosion(ctx);
-        lightningAlpha -= 0.025; 
-    }
 }
-
-function logHistoryRow(round, betAmt, mult, result, payout) {
-    const row = document.createElement('tr');
-    const badgeClass = result === 'WIN' ? 'badge-win' : 'badge-loss';
-    const payoutText = result === 'WIN' ? `+₹${payout}` : `-₹${betAmt}`;
-    
-    row.innerHTML = `
-        <td>#${round}</td>
-        <td>₹${betAmt}</td>
-        <td>${mult.toFixed(2)}x</td>
-        <td><span class="${badgeClass}">${result}</span></td>
-        <td style="color:${result === 'WIN' ? 'var(--accent-green)' : 'var(--accent-red)'}">${payoutText}</td>
-    `;
-    historyTableBody.prepend(row);
-}
-
-function startTopTimerAnimation(durationMs) {
-    if (topTimerInterval) clearInterval(topTimerInterval);
-    const startTime = Date.now();
-    topTimerFill.style.width = '100%';
-
-    topTimerInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remainingPct = Math.max(0, 100 - (elapsed / durationMs) * 100);
-        topTimerFill.style.width = remainingPct + '%';
-
-        if (remainingPct <= 0) {
-            clearInterval(topTimerInterval);
-        }
-    }, 50);
-}
-
-// SOCKET EVENTS
-socket.on('init:history', ({ history }) => {
-    if (Array.isArray(history)) {
-        planeHistory = history;
-        renderPlaneHistoryUI();
-    }
-});
 
 socket.on('round:waiting', ({ roundNumber, duration }) => {
-    roundNum = roundNumber;
-    running = false;
-    targetMultiplier = 1.0;
-    displayMultiplier = 1.0;
-    crashPoint = null;
-    points = [];
-    triggerLightningFX = false;
-    lightningAlpha = 0;
-    shockwaveRadius = 0;
-    multiplierText.textContent = '1.00x';
-    multiplierText.style.color = 'var(--text-primary)';
-    
-    if (startMusic) startMusic.pause();
-
-    startTopTimerAnimation(duration || 7000);
-
-    if (isLoggedIn) {
-        if (isNextRoundBet) {
-            isNextRoundBet = false;
-            socket.emit('bet:place', currentBetAmount);
-        } else {
-            statusText.textContent = 'Betting open — place your bet';
-            betBtn.disabled = false;
-            betBtn.textContent = 'Bet';
-            betBtn.className = 'bet-btn';
-        }
-    }
-    
-    cashoutBtn.disabled = true;
-    betPlaced = false;
-    cashedOut = false;
-    
-    liveProfitPill.classList.remove('active');
+    running = false; points = [];
+    multiplierText.textContent = '1.00x'; multiplierText.style.color = 'var(--text-primary)';
     drawFrame();
-
-    if (isLoggedIn && autoBetToggle.checked && !betPlaced && !isNextRoundBet) {
-        setTimeout(() => {
-            if (!betPlaced) betBtn.click();
-        }, 300);
-    }
 });
 
 socket.on('round:start', () => {
-    running = true;
-    startTime = performance.now();
-    targetMultiplier = 1.0;
-    displayMultiplier = 1.0;
-    points = [{ t: 0, m: 1.0 }];
-    topTimerFill.style.width = '0%';
-    
-    if (isLoggedIn) {
-        if (betPlaced) {
-            betBtn.disabled = true;
-            statusText.textContent = 'Flying... Cash out anytime!';
-            cashoutBtn.disabled = false;
-        } else {
-            betBtn.disabled = false;
-            if (isNextRoundBet) {
-                betBtn.textContent = 'CANCEL NEXT BET';
-                betBtn.className = 'bet-btn cancel-btn';
-                statusText.textContent = 'Bet queued for NEXT round!';
-            } else {
-                betBtn.textContent = 'BET (NEXT ROUND)';
-                betBtn.className = 'bet-btn';
-                statusText.textContent = 'Round in progress';
-            }
-            cashoutBtn.disabled = true;
-        }
-    }
-    
-    if (isLoggedIn && audioUnlocked && !isMuted) {
-        startMusic.volume = 0.45;
-        startMusic.currentTime = 0;
-        startMusic.play().catch(e => console.log('Audio error'));
-    }
-
+    running = true; startTime = performance.now(); points = [{ t: 0, m: 1.0 }];
     requestAnimationFrame(loop);
 });
 
 socket.on('round:tick', ({ multiplier: m }) => {
     targetMultiplier = m;
     points.push({ t: performance.now() - startTime, m });
-    if (points.length > 400) points.shift();
-
-    if (isLoggedIn && running && betPlaced && !cashedOut && autoCashoutToggle.checked) {
-        const targetVal = parseFloat(autoCashoutInput.value);
-        if (targetVal && m >= targetVal) {
-            cashoutBtn.click();
-        }
-    }
+    // DYNAMIC PERFORMANCE SHIFT TO PREVENT MULTI-PHONE LAG
+    if (points.length > 80) points.shift();
 });
 
 socket.on('round:crash', ({ crashPoint: cp, history }) => {
-    crashPoint = cp;
     running = false;
-    targetMultiplier = cp;
-    displayMultiplier = cp;
-    points.push({ t: performance.now() - startTime, m: cp });
     multiplierText.textContent = cp.toFixed(2) + 'x';
     multiplierText.style.color = 'var(--accent-red)';
-    statusText.textContent = 'Crashed at ' + cp.toFixed(2) + 'x';
-    cashoutBtn.disabled = true;
-
-    if (Array.isArray(history)) {
-        planeHistory = history;
-        renderPlaneHistoryUI();
-    }
-
-    liveProfitPill.classList.remove('active');
-
-    triggerLightningFX = true;
-    lightningAlpha = 0.85;
-    triggerExplosionFX(livePlaneCanvasX, livePlaneCanvasY);
-
-    if (isLoggedIn && betPlaced && !cashedOut) {
-        totalPlayed++;
-        totalLosses++;
-        cumulativeNetPL -= currentBetAmount;
-        updateProgressUI();
-        logHistoryRow(roundNum, currentBetAmount, cp, 'LOSS', 0);
-    }
-
-    if (startMusic) startMusic.pause();          
-    if (isLoggedIn && explodeMusic && !isMuted) {
-        explodeMusic.currentTime = 0;
-        explodeMusic.play().catch(e => console.log('Audio play error'));         
-    }
-    
+    if (Array.isArray(history)) { planeHistory = history; renderPlaneHistoryUI(); }
     drawFrame();
-});
-
-// BET CONFIRMED
-socket.on('bet:confirmed', ({ amount }) => {
-    betPlaced = true;
-    betBtn.disabled = false;
-    betBtn.textContent = 'CANCEL BET';
-    betBtn.className = 'bet-btn cancel-btn';
-    statusText.textContent = 'Bet placed — click CANCEL to abort';
-});
-
-// QUEUE CONFIRMED
-socket.on('bet:queue_confirmed', ({ amount }) => {
-    statusText.textContent = 'Bet queued for NEXT round!';
-});
-
-// BET CANCELLED
-socket.on('bet:cancelled', ({ amount }) => {
-    betPlaced = false;
-    demoBalance += amount;
-    balanceEl.textContent = demoBalance;
-    betBtn.textContent = 'Bet';
-    betBtn.className = 'bet-btn';
-    statusText.textContent = 'Bet cancelled — ₹' + amount + ' refunded';
-});
-
-// CASHOUT
-socket.on('you:cashedout', ({ multiplier: m, winnings }) => {
-    statusText.textContent = 'Cashed out at ' + m.toFixed(2) + 'x (+₹' + winnings + ')';
-    cashoutBtn.disabled = true;
-    cashedOut = true;
-
-    liveProfitPill.classList.remove('active');
-
-    if (isLoggedIn) {
-        totalPlayed++;
-        totalWins++;
-        const netProfit = winnings - currentBetAmount;
-        cumulativeNetPL += netProfit;
-        demoBalance += winnings;
-        balanceEl.textContent = demoBalance;
-        updateProgressUI();
-        logHistoryRow(roundNum, currentBetAmount, m, 'WIN', winnings);
-
-        playCashoutSoundSynthesized();
-        if (winMusic && !isMuted) {
-            winMusic.currentTime = 0;
-            winMusic.volume = 1.0;
-            winMusic.play().catch(e => console.log('Win audio fallback'));
-        }
-    }
 });
 
 function loop(){
-    if(!running && !triggerLightningFX) return;
+    if(!running) return;
     drawFrame();
     requestAnimationFrame(loop);
 }
-
-// BUTTON LISTENERS
-betBtn.addEventListener('click', () => {
-    if (!isLoggedIn) return;
-    unlockAudio();
-
-    if (running && !betPlaced) {
-        if (isNextRoundBet) {
-            isNextRoundBet = false;
-            demoBalance += currentBetAmount;
-            balanceEl.textContent = demoBalance;
-            betBtn.textContent = 'BET (NEXT ROUND)';
-            betBtn.className = 'bet-btn';
-            statusText.textContent = 'Next bet cancelled — ₹' + currentBetAmount + ' refunded';
-            socket.emit('bet:cancel');
-        } else {
-            const amt = parseInt(betInput.value, 10);
-            if (!amt || amt < 1 || amt > demoBalance) return;
-            
-            currentBetAmount = amt;
-            demoBalance -= amt;
-            balanceEl.textContent = demoBalance;
-
-            isNextRoundBet = true;
-            betBtn.textContent = 'CANCEL NEXT BET';
-            betBtn.className = 'bet-btn cancel-btn';
-            statusText.textContent = 'Bet queued for NEXT round!';
-            
-            socket.emit('bet:queue', amt);
-        }
-    } else {
-        if (betPlaced) {
-            socket.emit('bet:cancel');
-        } else {
-            const amt = parseInt(betInput.value, 10);
-            if (!amt || amt < 1 || amt > demoBalance) return;
-            
-            currentBetAmount = amt;
-            demoBalance -= amt;
-            balanceEl.textContent = demoBalance;
-
-            socket.emit('bet:place', amt);
-        }
-    }
-});
-
-cashoutBtn.addEventListener('click', () => {
-    if (!isLoggedIn) return;
-    unlockAudio();
-    socket.emit('bet:cashout');
-});
 </script>
 </body>
 </html>
