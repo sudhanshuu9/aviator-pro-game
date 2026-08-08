@@ -71,18 +71,19 @@ function startFlyingPhase() {
 
     io.emit('round:start', { roundNumber });
 
+    // 50ms server ticks for ultra-smooth multiplier updates
     gameTimer = setInterval(() => {
         const elapsedSec = (Date.now() - startTime) / 1000;
         
-        // Exponential multiplier progression formula
-        currentMultiplier = Number((1.00 + 0.06 * Math.pow(elapsedSec, 1.85)).toFixed(2));
+        // Authentic Aviator multiplier progression curve
+        currentMultiplier = Number((Math.pow(1.07, elapsedSec * 1.5)).toFixed(2));
 
         if (currentMultiplier >= crashPoint) {
             triggerCrash();
         } else {
             io.emit('round:tick', { multiplier: currentMultiplier });
         }
-    }, 100);
+    }, 50);
 }
 
 // 3. CRASH PHASE
