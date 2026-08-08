@@ -104,15 +104,14 @@ io.on('connection', (socket) => {
         socket.emit('round:waiting', { roundNumber, duration: WAITING_TIME });
     }
 
-    // 🟢 LOGS LOGIN NAME IN RENDER TERMINAL
+    // 🟢 LOGS PLAYER LOGIN
     socket.on('player:login', (data) => {
         socket.playerName = (data && data.name) ? data.name.trim() : 'Pilot';
         console.log(`🟢 [LOGIN] Player "${socket.playerName}" logged in! (Socket ID: ${socket.id})`);
     });
 
-    // 💰 LOGS BET IN RENDER TERMINAL
+    // 💰 LOGS BET PLACED (WAITING PHASE)
     socket.on('bet:place', (amount) => {
-        if (gameState !== 'waiting') return;
         const betAmt = parseInt(amount, 10);
         if (isNaN(betAmt) || betAmt <= 0) return;
 
@@ -122,21 +121,29 @@ io.on('connection', (socket) => {
             name: socket.playerName
         });
 
-        console.log(`💰 [BET] ${socket.playerName} placed a bet of ₹${betAmt}`);
+        console.log(`💰 [BET] ${socket.playerName} placed a bet of ₹${betAmt} for Round #${roundNumber}`);
         socket.emit('bet:confirmed', { amount: betAmt });
     });
 
-    socket.on('bet:cancel', () => {
-        if (gameState !== 'waiting') return;
-        const playerBet = activeBets.get(socket.id);
-        if (playerBet) {
-            activeBets.delete(socket.id);
-            console.log(`❌ [CANCEL] ${socket.playerName} cancelled bet of ₹${playerBet.amount}`);
-            socket.emit('bet:cancelled', { amount: playerBet.amount });
-        }
+    // 💰 LOGS BET QUEUED MID-FLIGHT (NEXT ROUND)
+    socket.on('bet:queue', (amount) => {
+        const betAmt = parseInt(amount, 10);
+        if (isNaN(betAmt) || betAmt <= 0) return;
+
+        console.log(`⏳ [BET QUEUED] ${socket.playerName} queued ₹${betAmt} for Next Round`);
+        socket.emit('bet:queue_confirmed', { amount: betAmt });
     });
 
-    // 🎉 LOGS CASHOUT IN RENDER TERMINAL
+    // ❌ LOGS BET CANCELLED
+    socket.on('bet:cancel', () => {
+        const playerBet = activeBets.get(socket.id);
+        const betAmt = playerBet ? playerBet.amount : 'bet';
+        activeBets.delete(socket.id);
+        console.log(`❌ [CANCEL] ${socket.playerName} cancelled bet of ₹${betAmt}`);
+        socket.emit('bet:cancelled', { amount: betAmt });
+    });
+
+    // 🎉 LOGS CASHOUT INSTANTLY
     socket.on('bet:cashout', () => {
         if (gameState !== 'flying') return;
         const playerBet = activeBets.get(socket.id);
