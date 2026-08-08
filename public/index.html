@@ -318,7 +318,7 @@
       font-weight: 600;
     }
 
-    /* PLANE CRASH HISTORY STRIP (DIRECTLY BELOW FLIGHT SCREEN) */
+    /* PLANE CRASH HISTORY STRIP (NEWEST ON LEFT) */
     .plane-history-strip {
       display: flex;
       align-items: center;
@@ -424,16 +424,19 @@
       transform: scale(1);
     }
 
-    /* BET & CASHOUT BUTTONS */
+    /* BET & CASHOUT BUTTONS (MOBILE RESPONSIVE FLEX-WRAP FIX) */
     .row {
       display: flex;
-      gap: 12px;
+      flex-wrap: wrap; /* Responsive wrapping fix for phones */
+      gap: 10px;
       align-items: center;
       margin-bottom: 12px;
+      width: 100%;
     }
 
     input[type=number] {
-      flex: 1;
+      flex: 1 1 120px;
+      min-width: 0;
       background: rgba(0, 0, 0, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: var(--text-primary);
@@ -454,7 +457,7 @@
     button {
       border: none;
       border-radius: 14px;
-      padding: 12px 22px;
+      padding: 12px 18px;
       font-size: 16px;
       font-weight: 900;
       cursor: pointer;
@@ -469,32 +472,36 @@
     .bet-btn {
       background: linear-gradient(135deg, #ff2a55, #c026d3);
       color: white;
-      flex: 1.2;
+      flex: 1 1 120px;
+      min-width: 0;
       box-shadow: 0 6px 25px rgba(255, 42, 85, 0.45), inset 0 1px 1px rgba(255,255,255,0.3);
     }
 
     .cancel-btn {
       background: linear-gradient(135deg, #dc2626, #991b1b) !important;
       color: #ffffff !important;
-      flex: 1.2;
+      flex: 1 1 120px;
+      min-width: 0;
       box-shadow: 0 6px 25px rgba(220, 38, 38, 0.6) !important;
     }
 
     .cashout-btn {
       background: linear-gradient(135deg, #00e676, #00b0ff);
       color: #020617;
-      flex: 1.2;
+      flex: 1 1 120px;
+      min-width: 0;
       box-shadow: 0 6px 25px rgba(0, 230, 118, 0.45), inset 0 1px 1px rgba(255,255,255,0.4);
     }
 
     .quick-bets {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
 
     .quick-bet-btn {
-      flex: 1;
+      flex: 1 1 60px;
       min-height: 40px;
       padding: 6px 8px;
       background: linear-gradient(145deg, #1e293b, #0f172a);
@@ -773,6 +780,7 @@
   <div class="balance-bar">
     <span><b id="playerGreetingDisplay" class="player-tag">Heyy Pilot . Let's gooo</b></span>
     <span>Balance: <b>₹<span id="balance">10000</span></b>
+      <button class="topup-btn" id="soundToggleBtn" onclick="toggleMute()">🔊 Sound On</button>
       <button class="topup-btn" onclick="topUpBalance()">🔄 Top Up</button>
       <button class="download-btn" onclick="triggerDownload()">📥 Download App</button>
     </span>
@@ -790,11 +798,12 @@
   <div class="multiplier" id="multiplierText">1.00x</div>
   <div class="status" id="statusText">Login to place your bet</div>
 
-  <!-- PLANE CRASH MULTIPLIER HISTORY STRIP (DIRECTLY BELOW FLIGHT SCREEN) -->
+  <!-- PLANE CRASH MULTIPLIER HISTORY STRIP (NEWEST ON LEFT + 25 MODAL BUTTON) -->
   <div class="plane-history-strip">
     <div class="plane-history-label">History:</div>
+    <button class="topup-btn" style="margin-right: 4px; padding: 2px 8px; font-size: 10px;" onclick="openHistoryModal()">📜 Stats (25)</button>
     <div class="plane-history-pills" id="planeHistoryPills">
-      <!-- Dynamic history pills will render here -->
+      <!-- Dynamic history pills will render here (Newest on Left) -->
     </div>
   </div>
 
@@ -812,12 +821,14 @@
     <button class="cashout-btn" id="cashoutBtn" disabled>Cash Out</button>
   </div>
 
+  <!-- ADDITIVE QUICK BETS (+100, +250, ETC) -->
   <div class="quick-bets">
-    <button class="quick-bet-btn" onclick="setBet(100)">100</button>
-    <button class="quick-bet-btn" onclick="setBet(250)">250</button>
-    <button class="quick-bet-btn" onclick="setBet(500)">500</button>
-    <button class="quick-bet-btn" onclick="setBet(1000)">1000</button>
-    <button class="quick-bet-btn" onclick="setBet(2000)">2000</button>
+    <button class="quick-bet-btn" onclick="addBet(100)">+100</button>
+    <button class="quick-bet-btn" onclick="addBet(250)">+250</button>
+    <button class="quick-bet-btn" onclick="addBet(500)">+500</button>
+    <button class="quick-bet-btn" onclick="addBet(1000)">+1000</button>
+    <button class="quick-bet-btn" onclick="addBet(2000)">+2000</button>
+    <button class="quick-bet-btn" style="border-color: rgba(255, 42, 85, 0.4); color: var(--accent-red);" onclick="resetBet()">Reset</button>
   </div>
 
   <!-- AUTO PANEL -->
@@ -896,6 +907,19 @@
   </div>
 </div>
 
+<!-- 25-ROUND HISTORY MODAL OVERLAY -->
+<div id="historyModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(3,7,18,0.88); backdrop-filter:blur(12px); z-index:2000; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:linear-gradient(145deg, #0f172a, #020617); border:1px solid rgba(0, 210, 255, 0.35); border-radius:20px; padding:20px; width:100%; max-width:400px; box-shadow:0 20px 50px rgba(0,0,0,0.95);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; font-size:15px; font-weight:900; color:var(--accent-blue);">📜 Last 25 Rounds History</h3>
+      <button onclick="closeHistoryModal()" style="background:none; border:none; color:var(--text-secondary); font-size:22px; cursor:pointer; min-height:auto; padding:0;">✕</button>
+    </div>
+    <div id="modalHistoryGrid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; max-height:280px; overflow-y:auto; padding-right:4px;">
+      <!-- Dynamic 25 history grid items -->
+    </div>
+  </div>
+</div>
+
 <footer>
   Client-side demo built with Node.js & Canvas.
 </footer>
@@ -915,6 +939,9 @@ let points = [];
 let isLoggedIn = false;
 let demoBalance = 10000;
 let currentBetAmount = 0;
+
+// SOUND MUTE TOGGLE
+let isMuted = false;
 
 // USER PROGRESS METRICS
 let totalPlayed = 0;
@@ -963,6 +990,7 @@ const pStarsEl = document.getElementById('pStars');
 const planeHistoryPills = document.getElementById('planeHistoryPills');
 const topTimerFill = document.getElementById('topTimerFill');
 const playerGreetingDisplay = document.getElementById('playerGreetingDisplay');
+const soundToggleBtn = document.getElementById('soundToggleBtn');
 
 function togglePasswordView() {
     passInput.type = passInput.type === 'password' ? 'text' : 'password';
@@ -1000,8 +1028,36 @@ function triggerDownload() {
     alert('📥 Aviator Pro App Client setup initiated!');
 }
 
-function setBet(amt) { betInput.value = amt; }
+// ADDITIVE BET BUTTONS (+100, +250, ETC)
+function addBet(amt) {
+    let current = parseInt(betInput.value, 10) || 0;
+    betInput.value = current + amt;
+}
+
+function resetBet() {
+    betInput.value = 100;
+}
+
 function setPreset(val) { autoCashoutInput.value = val.toFixed(1); }
+
+// MUTE / UNMUTE SOUND CONTROLLER
+function toggleMute() {
+    isMuted = !isMuted;
+    soundToggleBtn.textContent = isMuted ? '🔇 Muted' : '🔊 Sound On';
+    if (isMuted) {
+        if (startMusic) startMusic.pause();
+        if (explodeMusic) explodeMusic.pause();
+        if (winMusic) winMusic.pause();
+    }
+}
+
+// 25-HISTORY MODAL CONTROLLERS
+function openHistoryModal() {
+    document.getElementById('historyModal').style.display = 'flex';
+}
+function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+}
 
 function resizeCanvas(){
     canvas.width = canvas.clientWidth * devicePixelRatio;
@@ -1051,6 +1107,7 @@ function unlockAudio() {
 
 // Crisp, zero-lag Web Audio API Synthesizer Chime for Cashout
 function playCashoutSoundSynthesized() {
+    if (isMuted) return;
     if (!audioCtx) unlockAudio();
     if (!audioCtx) return;
 
@@ -1087,11 +1144,14 @@ function playCashoutSoundSynthesized() {
     osc2.stop(now + 0.5);
 }
 
-// RENDER RECENT PLANE MULTIPLIER HISTORY PILLS (UP TO 25)
+// RENDER RECENT PLANE MULTIPLIER HISTORY PILLS (NEWEST ON LEFT)
 function renderPlaneHistoryUI() {
     planeHistoryPills.innerHTML = '';
     
-    planeHistory.forEach(m => {
+    // Reverse array slice so latest appears first on left
+    const newestFirst = planeHistory.slice().reverse();
+
+    newestFirst.forEach(m => {
         const pill = document.createElement('span');
         pill.className = 'history-pill ';
         
@@ -1107,8 +1167,31 @@ function renderPlaneHistoryUI() {
         planeHistoryPills.appendChild(pill);
     });
 
-    // Auto-scroll to latest entry
-    planeHistoryPills.scrollLeft = planeHistoryPills.scrollWidth;
+    // Ensure scroll position starts on left
+    planeHistoryPills.scrollLeft = 0;
+
+    // Render 25 history modal grid
+    renderModalHistoryGrid(newestFirst);
+}
+
+function renderModalHistoryGrid(newestFirst) {
+    const grid = document.getElementById('modalHistoryGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    newestFirst.slice(0, 25).forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'history-pill ';
+        if (m >= 10.0) item.className += 'pill-gold';
+        else if (m >= 2.0) item.className += 'pill-green';
+        else item.className += 'pill-blue';
+        
+        item.style.textAlign = 'center';
+        item.style.padding = '6px 2px';
+        item.style.fontSize = '12px';
+        item.textContent = m.toFixed(2) + 'x';
+        grid.appendChild(item);
+    });
 }
 
 function valueToY(h, m){
@@ -1629,7 +1712,7 @@ socket.on('round:start', () => {
         }
     }
     
-    if (isLoggedIn && audioUnlocked) {
+    if (isLoggedIn && audioUnlocked && !isMuted) {
         startMusic.volume = 0.45;
         startMusic.currentTime = 0;
         startMusic.play().catch(e => console.log('Audio error'));
@@ -1671,7 +1754,7 @@ socket.on('round:crash', ({ crashPoint: cp, history }) => {
     statusText.textContent = 'Crashed at ' + cp.toFixed(2) + 'x';
     cashoutBtn.disabled = true;
 
-    // UPDATE RECENT PLANE HISTORY STRIP (UP TO 25)
+    // UPDATE RECENT PLANE HISTORY STRIP (NEWEST ON LEFT)
     if (Array.isArray(history)) {
         planeHistory = history;
         renderPlaneHistoryUI();
@@ -1692,7 +1775,7 @@ socket.on('round:crash', ({ crashPoint: cp, history }) => {
     }
 
     if (startMusic) startMusic.pause();          
-    if (isLoggedIn && explodeMusic) {
+    if (isLoggedIn && explodeMusic && !isMuted) {
         explodeMusic.currentTime = 0;
         explodeMusic.play().catch(e => console.log('Audio play error'));         
     }
@@ -1739,7 +1822,7 @@ socket.on('you:cashedout', ({ multiplier: m, winnings }) => {
 
         // PLAY UNSTOPPABLE SYNTHESIZED AUDIO + WIN AUDIO FALLBACK
         playCashoutSoundSynthesized();
-        if (winMusic) {
+        if (winMusic && !isMuted) {
             winMusic.currentTime = 0;
             winMusic.volume = 1.0;
             winMusic.play().catch(e => console.log('Win audio fallback'));
