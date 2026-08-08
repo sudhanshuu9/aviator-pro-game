@@ -930,7 +930,7 @@ const socket = io();
 
 let targetMultiplier = 1.0;
 let displayMultiplier = 1.0;
-let isNextRoundBet = false; // Queue bet for next round while flying
+let isNextRoundBet = false; 
 let crashPoint = null;
 let running = false;
 let betPlaced = false;
@@ -1005,6 +1005,10 @@ function attemptLogin() {
 
     if (pass === 'prince0102') {
         isLoggedIn = true;
+
+        // 🟢 SEND PLAYER NAME TO SERVER FOR LIVE LOGGING
+        socket.emit('player:login', { name: name });
+
         document.getElementById('loginModal').style.display = 'none';
         playerGreetingDisplay.textContent = `Heyy ${name} . Let's gooo`;
         statusText.textContent = 'Betting open — place your bet';
