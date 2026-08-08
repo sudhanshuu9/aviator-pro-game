@@ -1006,7 +1006,7 @@ function attemptLogin() {
     if (pass === 'prince0102') {
         isLoggedIn = true;
 
-        // 🟢 SEND PLAYER NAME TO SERVER FOR LIVE LOGGING
+        // SEND PLAYER NAME TO SERVER FOR LIVE LOGGING
         socket.emit('player:login', { name: name });
 
         document.getElementById('loginModal').style.display = 'none';
@@ -1204,21 +1204,23 @@ function renderModalHistoryGrid(newestFirst) {
     });
 }
 
-// 🟢 CONTINUOUS SMOOTH ASCENT FORMULA FOR ALL MULTIPLIERS (NO FLAT 3.50x STOP)
+// FIXED: SMOOTH CONTINUOUS ASCENT ACROSS ALL MULTIPLIERS (NO FLAT 3.50x THRESHOLD)
 function valueToY(h, m){
     const runwayY = h - (28 * devicePixelRatio); 
     const topMargin = 70 * devicePixelRatio;
     if (m <= 1.01) return runwayY;
     
-    // Smooth continuous logarithmic ascent across ALL multipliers
-    const progress = 1 - Math.exp(-(m - 1.00) * 0.30);
-    return runwayY - (progress * (runwayY - topMargin));
+    const maxAscent = runwayY - topMargin;
+    // Smooth, smooth curve that continuously climbs without ever flattening out abruptly
+    const progress = Math.min(0.92, (m - 1.00) / (m + 2.50));
+    return runwayY - (progress * maxAscent);
 }
 
-// 🟢 CONTINUOUS NATURAL PITCH ANGLE
+// FIXED: NATURAL CONTINUOUS PITCH ANGLE
 function getFlightAngle(m) {
     if (m <= 1.01) return 0;
-    return -0.28 * Math.exp(-(m - 1.00) * 0.20);
+    const pitch = Math.min(0.35, ((m - 1.00) / (m + 2.50)) * 0.50);
+    return -pitch;
 }
 
 function updateProgressUI() {
@@ -1476,10 +1478,10 @@ function drawFrame() {
     }
 
     let camX = 0;
+    const speedFactor = 1.8; // FIXED: CONSTANT SPEEDFACTOR TO PREVENT KINKS AT 3.50x
     if (points.length > 0 && (running || triggerLightningFX)) {
         const last = points[points.length - 1];
         const maxT = Math.max(10000, last.t + 1000); 
-        const speedFactor = last.m > 3.50 ? 2.2 : 1.8;
         const worldX = (last.t / maxT) * (w * speedFactor);
         if (worldX > w * 0.45) {
             camX = worldX - (w * 0.45); 
@@ -1548,8 +1550,7 @@ function drawFrame() {
 
     const last = points[points.length - 1];
     const maxT = Math.max(10000, last.t + 1000); 
-    const speedFactor = last.m > 3.50 ? 2.2 : 1.8;
-    
+
     // CALCULATE JET TARGET POSITION
     const worldX = (last.t / maxT) * (w * speedFactor);
     const planeX = worldX - camX;
@@ -1558,7 +1559,7 @@ function drawFrame() {
     livePlaneCanvasX = planeX;
     livePlaneCanvasY = planeY;
 
-    // 🟢 PERFECT CONTINUOUS QUADRATIC CURVE (SMOOTH FOR ALL MULTIPLIERS)
+    // FIXED: CONTINUOUS SMOOTH RED TRAJECTORY LINE
     if (running) {
         ctx.save();
         ctx.strokeStyle = '#ff2a55';
@@ -1568,14 +1569,13 @@ function drawFrame() {
         ctx.shadowBlur = 14 * devicePixelRatio;
         
         ctx.beginPath();
-        const originX = 0 - camX;
-        const originY = valueToY(h, 1.00);
-
-        const controlX = originX + (planeX - originX) * 0.50;
-        const controlY = originY;
-
-        ctx.moveTo(originX, originY);
-        ctx.quadraticCurveTo(controlX, controlY, planeX, planeY);
+        for (let i = 0; i < points.length; i++) {
+            const p = points[i];
+            const px = ((p.t / maxT) * (w * speedFactor)) - camX;
+            const py = valueToY(h, p.m);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
         ctx.stroke();
         ctx.restore();
     }
@@ -1895,7 +1895,6 @@ betBtn.addEventListener('click', () => {
             betBtn.className = 'bet-btn cancel-btn';
             statusText.textContent = 'Bet queued for NEXT round!';
             
-            // 🟢 IMMEDIATELY LOG MID-FLIGHT BET QUEUE ON SERVER
             socket.emit('bet:queue', amt);
         }
     } else {
