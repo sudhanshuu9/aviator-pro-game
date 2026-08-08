@@ -15,8 +15,11 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
 app.use(express.static(path.join(__dirname, 'public')));
+// Force Express to serve index.html for any incoming web request
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Game Timing (Milliseconds)
 const WAITING_TIME = 7000; // 7 seconds countdown phase
