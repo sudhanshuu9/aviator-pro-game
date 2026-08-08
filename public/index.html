@@ -1559,49 +1559,40 @@ function drawFrame() {
     const maxT = Math.max(10000, last.t + 1000); 
     const speedFactor = last.m > 3.50 ? 2.2 : 1.8;
     
-    // SMOOTH RED TRAJECTORY LINE (Quadratic Bezier Curve)
-    if (running && points.length > 1) {
+    // CALCULATE JET TARGET POSITION
+    const worldX = (last.t / maxT) * (w * speedFactor);
+    const planeX = worldX - camX;
+    const planeY = valueToY(h, last.m);
+
+    livePlaneCanvasX = planeX;
+    livePlaneCanvasY = planeY;
+
+    // 🟢 100% SMOOTH CONTINUOUS TRAJECTORY LINE (ZERO ZIG-ZAG / ZERO STAIRCASE)
+    if (running) {
         ctx.save();
         ctx.strokeStyle = '#ff2a55';
         ctx.lineWidth = 4 * devicePixelRatio;
         ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
         ctx.shadowColor = '#ff2a55';
-        ctx.shadowBlur = 12 * devicePixelRatio;
+        ctx.shadowBlur = 14 * devicePixelRatio;
         
         ctx.beginPath();
-        const firstPtX = ((points[0].t / maxT) * (w * speedFactor)) - camX;
-        const firstPtY = valueToY(h, points[0].m);
-        ctx.moveTo(firstPtX, firstPtY);
+        const originX = 0 - camX;
+        const originY = valueToY(h, 1.00);
 
-        for (let i = 1; i < points.length - 1; i++) {
-            const pCurrentX = ((points[i].t / maxT) * (w * speedFactor)) - camX;
-            const pCurrentY = valueToY(h, points[i].m);
-            const pNextX = ((points[i + 1].t / maxT) * (w * speedFactor)) - camX;
-            const pNextY = valueToY(h, points[i + 1].m);
-            
-            const midX = (pCurrentX + pNextX) / 2;
-            const midY = (pCurrentY + pNextY) / 2;
-            ctx.quadraticCurveTo(pCurrentX, pCurrentY, midX, midY);
-        }
+        // Parabolic quadratic curve directly to plane nose
+        const controlX = originX + (planeX - originX) * 0.55;
+        const controlY = originY;
 
-        const lastX = ((last.t / maxT) * (w * speedFactor)) - camX;
-        const lastY = valueToY(h, last.m);
-        ctx.lineTo(lastX, lastY);
-
+        ctx.moveTo(originX, originY);
+        ctx.quadraticCurveTo(controlX, controlY, planeX, planeY);
         ctx.stroke();
         ctx.restore();
     }
 
     // JET SPRITE & FLAME
     if (running) {
-        const worldX = (last.t / maxT) * (w * speedFactor);
-        const x = worldX - camX;
-        const y = valueToY(h, last.m);
         const angle = getFlightAngle(last.m);
-
-        livePlaneCanvasX = x;
-        livePlaneCanvasY = y;
 
         const planeW = 95 * devicePixelRatio;
         const planeH = 95 * devicePixelRatio;
@@ -1610,7 +1601,7 @@ function drawFrame() {
         const tailY = planeH * 0.04;
 
         ctx.save();
-        ctx.translate(x, y);
+        ctx.translate(planeX, planeY);
         ctx.rotate(angle);
 
         const flameLen = (34 + Math.random() * 16) * devicePixelRatio;
