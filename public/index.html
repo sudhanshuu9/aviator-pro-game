@@ -318,7 +318,7 @@
       font-weight: 600;
     }
 
-    /* PLANE CRASH HISTORY STRIP (NEWEST ON LEFT) */
+    /* PLANE CRASH HISTORY STRIP */
     .plane-history-strip {
       display: flex;
       align-items: center;
@@ -424,7 +424,7 @@
       transform: scale(1);
     }
 
-    /* BET & CASHOUT BUTTONS (MOBILE RESPONSIVE FLEX-WRAP FIX) */
+    /* BET & CASHOUT BUTTONS */
     .row {
       display: flex;
       flex-wrap: wrap;
@@ -803,7 +803,7 @@
     <div class="plane-history-label">History:</div>
     <button class="topup-btn" style="margin-right: 4px; padding: 2px 8px; font-size: 10px;" onclick="openHistoryModal()">📜 Stats (25)</button>
     <div class="plane-history-pills" id="planeHistoryPills">
-      <!-- Dynamic history pills will render here (Newest on Left) -->
+      <!-- Dynamic history pills will render here -->
     </div>
   </div>
 
@@ -928,7 +928,8 @@
 // GLOBAL STATE
 const socket = io();
 
-let multiplier = 1.0;
+let targetMultiplier = 1.0;
+let displayMultiplier = 1.0;
 let crashPoint = null;
 let running = false;
 let betPlaced = false;
@@ -1011,7 +1012,6 @@ function attemptLogin() {
         autoBetToggle.disabled = false;
         autoCashoutToggle.disabled = false;
 
-        // Quietly initialize audio on login with zero sound!
         unlockAudio();
     } else {
         errEl.style.display = 'block';
@@ -1045,7 +1045,6 @@ function toggleMute() {
     isMuted = !isMuted;
     soundToggleBtn.textContent = isMuted ? '🔇 Muted' : '🔊 Sound On';
     
-    // Explicitly update native audio element mute properties
     [startMusic, explodeMusic, winMusic].forEach(s => {
         if (s) s.muted = isMuted;
     });
@@ -1055,7 +1054,6 @@ function toggleMute() {
         if (explodeMusic) explodeMusic.pause();
         if (winMusic) winMusic.pause();
     } else {
-        // Resume flight music if unmuted mid-flight
         if (running && isLoggedIn && audioUnlocked) {
             startMusic.volume = 0.45;
             startMusic.play().catch(e => console.log('Audio resume error'));
@@ -1095,7 +1093,6 @@ winMusic.addEventListener('error', () => {
 
 let audioUnlocked = false;
 
-// 100% Silent Unlock on Login
 function unlockAudio() {
     if (!audioUnlocked && isLoggedIn) {
         try {
@@ -1106,14 +1103,13 @@ function unlockAudio() {
             }
         } catch(e) { console.log('AudioContext init error:', e); }
 
-        // Mute sounds during warmup call so login is completely quiet
         [startMusic, explodeMusic, winMusic].forEach(sound => {
             sound.load();
-            sound.muted = true; // MUTE before play
+            sound.muted = true;
             sound.play().then(() => {
                 sound.pause();
                 sound.currentTime = 0;
-                sound.muted = isMuted; // Restore user preference
+                sound.muted = isMuted;
             }).catch(() => {
                 sound.muted = isMuted;
             });
@@ -1122,7 +1118,6 @@ function unlockAudio() {
     }
 }
 
-// Web Audio API Synthesizer Chime for Cashout
 function playCashoutSoundSynthesized() {
     if (isMuted) return;
     if (!audioCtx) unlockAudio();
@@ -1134,7 +1129,6 @@ function playCashoutSoundSynthesized() {
 
     const now = audioCtx.currentTime;
 
-    // First Tone
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
     osc1.type = 'sine';
@@ -1147,7 +1141,6 @@ function playCashoutSoundSynthesized() {
     osc1.start(now);
     osc1.stop(now + 0.4);
 
-    // Second Tone
     const osc2 = audioCtx.createOscillator();
     const gain2 = audioCtx.createGain();
     osc2.type = 'triangle';
@@ -1472,6 +1465,20 @@ function drawFrame() {
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
+    // 60 FPS Multiplier Smooth Lerp (Fixes Number Hanging/Stuttering)
+    if (running) {
+        displayMultiplier += (targetMultiplier - displayMultiplier) * 0.25;
+        const showVal = displayMultiplier <= 1.02 ? 1.00 : displayMultiplier;
+        multiplierText.textContent = showVal.toFixed(2) + 'x';
+
+        if (isLoggedIn && betPlaced && !cashedOut) {
+            const potentialPayout = Math.floor(currentBetAmount * displayMultiplier);
+            const liveProfit = potentialPayout - currentBetAmount;
+            liveProfitVal.textContent = `+₹${Math.max(0, liveProfit)}`;
+            liveProfitPill.classList.add('active');
+        }
+    }
+
     let camX = 0;
     if (points.length > 0 && (running || triggerLightningFX)) {
         const last = points[points.length - 1];
@@ -1547,23 +1554,38 @@ function drawFrame() {
     const maxT = Math.max(10000, last.t + 1000); 
     const speedFactor = last.m > 3.50 ? 2.2 : 1.8;
     
-    // RED TRAJECTORY LINE
-    if (running) {
+    // SMOOTH RED TRAJECTORY LINE (Quadratic Bezier Curve + Round Joins)
+    if (running && points.length > 1) {
+        ctx.save();
         ctx.strokeStyle = '#ff2a55';
-        ctx.lineWidth = 3.5 * devicePixelRatio;
+        ctx.lineWidth = 4 * devicePixelRatio;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.shadowColor = '#ff2a55';
-        ctx.shadowBlur = 10 * devicePixelRatio;
+        ctx.shadowBlur = 12 * devicePixelRatio;
+        
         ctx.beginPath();
-        for (let i = 0; i < points.length; i++) {
-            const p = points[i];
-            const worldX = (p.t / maxT) * (w * speedFactor);
-            const px = worldX - camX;
-            const py = valueToY(h, p.m);
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
+        const firstPtX = ((points[0].t / maxT) * (w * speedFactor)) - camX;
+        const firstPtY = valueToY(h, points[0].m);
+        ctx.moveTo(firstPtX, firstPtY);
+
+        for (let i = 1; i < points.length - 1; i++) {
+            const pCurrentX = ((points[i].t / maxT) * (w * speedFactor)) - camX;
+            const pCurrentY = valueToY(h, points[i].m);
+            const pNextX = ((points[i + 1].t / maxT) * (w * speedFactor)) - camX;
+            const pNextY = valueToY(h, points[i + 1].m);
+            
+            const midX = (pCurrentX + pNextX) / 2;
+            const midY = (pCurrentY + pNextY) / 2;
+            ctx.quadraticCurveTo(pCurrentX, pCurrentY, midX, midY);
         }
+
+        const lastX = ((last.t / maxT) * (w * speedFactor)) - camX;
+        const lastY = valueToY(h, last.m);
+        ctx.lineTo(lastX, lastY);
+
         ctx.stroke();
-        ctx.shadowBlur = 0; 
+        ctx.restore();
     }
 
     // JET SPRITE & FLAME
@@ -1674,7 +1696,8 @@ socket.on('init:history', ({ history }) => {
 socket.on('round:waiting', ({ roundNumber, duration }) => {
     roundNum = roundNumber;
     running = false;
-    multiplier = 1.0;
+    targetMultiplier = 1.0;
+    displayMultiplier = 1.0;
     crashPoint = null;
     points = [];
     triggerLightningFX = false;
@@ -1711,6 +1734,8 @@ socket.on('round:waiting', ({ roundNumber, duration }) => {
 socket.on('round:start', () => {
     running = true;
     startTime = performance.now();
+    targetMultiplier = 1.0;
+    displayMultiplier = 1.0;
     points = [{ t: 0, m: 1.0 }];
     topTimerFill.style.width = '0%';
     
@@ -1735,19 +1760,9 @@ socket.on('round:start', () => {
 });
 
 socket.on('round:tick', ({ multiplier: m }) => {
-    multiplier = m;
-    const displayMultiplier = m <= 1.02 ? 1.00 : m;
-    multiplierText.textContent = displayMultiplier.toFixed(2) + 'x';
-    
+    targetMultiplier = m;
     points.push({ t: performance.now() - startTime, m });
     if (points.length > 400) points.shift();
-
-    if (isLoggedIn && betPlaced && !cashedOut && running) {
-        const potentialPayout = Math.floor(currentBetAmount * m);
-        const liveProfit = potentialPayout - currentBetAmount;
-        liveProfitVal.textContent = `+₹${liveProfit}`;
-        liveProfitPill.classList.add('active');
-    }
 
     if (isLoggedIn && running && betPlaced && !cashedOut && autoCashoutToggle.checked) {
         const targetVal = parseFloat(autoCashoutInput.value);
@@ -1760,7 +1775,8 @@ socket.on('round:tick', ({ multiplier: m }) => {
 socket.on('round:crash', ({ crashPoint: cp, history }) => {
     crashPoint = cp;
     running = false;
-    multiplier = cp;
+    targetMultiplier = cp;
+    displayMultiplier = cp;
     points.push({ t: performance.now() - startTime, m: cp });
     multiplierText.textContent = cp.toFixed(2) + 'x';
     multiplierText.style.color = 'var(--accent-red)';
