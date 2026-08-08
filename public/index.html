@@ -427,7 +427,7 @@
     /* BET & CASHOUT BUTTONS (MOBILE RESPONSIVE FLEX-WRAP FIX) */
     .row {
       display: flex;
-      flex-wrap: wrap; /* Responsive wrapping fix for phones */
+      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
       margin-bottom: 12px;
@@ -798,7 +798,7 @@
   <div class="multiplier" id="multiplierText">1.00x</div>
   <div class="status" id="statusText">Login to place your bet</div>
 
-  <!-- PLANE CRASH MULTIPLIER HISTORY STRIP (NEWEST ON LEFT + 25 MODAL BUTTON) -->
+  <!-- PLANE CRASH MULTIPLIER HISTORY STRIP -->
   <div class="plane-history-strip">
     <div class="plane-history-label">History:</div>
     <button class="topup-btn" style="margin-right: 4px; padding: 2px 8px; font-size: 10px;" onclick="openHistoryModal()">📜 Stats (25)</button>
@@ -821,7 +821,7 @@
     <button class="cashout-btn" id="cashoutBtn" disabled>Cash Out</button>
   </div>
 
-  <!-- ADDITIVE QUICK BETS (+100, +250, ETC) -->
+  <!-- ADDITIVE QUICK BETS -->
   <div class="quick-bets">
     <button class="quick-bet-btn" onclick="addBet(100)">+100</button>
     <button class="quick-bet-btn" onclick="addBet(250)">+250</button>
@@ -956,7 +956,7 @@ let planeHistory = [];
 let livePlaneCanvasX = 0;
 let livePlaneCanvasY = 0;
 
-// THUNDERSTORM & PROCEDURAL 4K EXPLOSION STATE
+// THUNDERSTORM & PROCEDURAL EXPLOSION STATE
 let triggerLightningFX = false;
 let lightningAlpha = 0;
 let explosionParticles = [];
@@ -1011,6 +1011,7 @@ function attemptLogin() {
         autoBetToggle.disabled = false;
         autoCashoutToggle.disabled = false;
 
+        // Quietly initialize audio on login with zero sound!
         unlockAudio();
     } else {
         errEl.style.display = 'block';
@@ -1028,7 +1029,6 @@ function triggerDownload() {
     alert('📥 Aviator Pro App Client setup initiated!');
 }
 
-// ADDITIVE BET BUTTONS (+100, +250, ETC)
 function addBet(amt) {
     let current = parseInt(betInput.value, 10) || 0;
     betInput.value = current + amt;
@@ -1040,18 +1040,29 @@ function resetBet() {
 
 function setPreset(val) { autoCashoutInput.value = val.toFixed(1); }
 
-// MUTE / UNMUTE SOUND CONTROLLER
+// MUTE / UNMUTE CONTROLLER
 function toggleMute() {
     isMuted = !isMuted;
     soundToggleBtn.textContent = isMuted ? '🔇 Muted' : '🔊 Sound On';
+    
+    // Explicitly update native audio element mute properties
+    [startMusic, explodeMusic, winMusic].forEach(s => {
+        if (s) s.muted = isMuted;
+    });
+
     if (isMuted) {
         if (startMusic) startMusic.pause();
         if (explodeMusic) explodeMusic.pause();
         if (winMusic) winMusic.pause();
+    } else {
+        // Resume flight music if unmuted mid-flight
+        if (running && isLoggedIn && audioUnlocked) {
+            startMusic.volume = 0.45;
+            startMusic.play().catch(e => console.log('Audio resume error'));
+        }
     }
 }
 
-// 25-HISTORY MODAL CONTROLLERS
 function openHistoryModal() {
     document.getElementById('historyModal').style.display = 'flex';
 }
@@ -1071,7 +1082,7 @@ const plane2Img = new Image();
 plane2Img.src = '/images/plane2.png?v=' + Date.now();
 plane2Img.onload = () => { drawFrame(); };
 
-// AUDIO SETUP WITH UNSTOPPABLE WEB AUDIO SYNTHESIZER
+// AUDIO SETUP
 const startMusic = new Audio('start-music.mpeg');
 startMusic.loop = true; 
 
@@ -1084,6 +1095,7 @@ winMusic.addEventListener('error', () => {
 
 let audioUnlocked = false;
 
+// 100% Silent Unlock on Login
 function unlockAudio() {
     if (!audioUnlocked && isLoggedIn) {
         try {
@@ -1094,18 +1106,23 @@ function unlockAudio() {
             }
         } catch(e) { console.log('AudioContext init error:', e); }
 
+        // Mute sounds during warmup call so login is completely quiet
         [startMusic, explodeMusic, winMusic].forEach(sound => {
             sound.load();
+            sound.muted = true; // MUTE before play
             sound.play().then(() => {
                 sound.pause();
                 sound.currentTime = 0;
-            }).catch(() => {});
+                sound.muted = isMuted; // Restore user preference
+            }).catch(() => {
+                sound.muted = isMuted;
+            });
         });
         audioUnlocked = true;
     }
 }
 
-// Crisp, zero-lag Web Audio API Synthesizer Chime for Cashout
+// Web Audio API Synthesizer Chime for Cashout
 function playCashoutSoundSynthesized() {
     if (isMuted) return;
     if (!audioCtx) unlockAudio();
@@ -1121,8 +1138,8 @@ function playCashoutSoundSynthesized() {
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(523.25, now); // C5
-    osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25); // C6
+    osc1.frequency.setValueAtTime(523.25, now);
+    osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
     gain1.gain.setValueAtTime(0.3, now);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
     osc1.connect(gain1);
@@ -1134,8 +1151,8 @@ function playCashoutSoundSynthesized() {
     const osc2 = audioCtx.createOscillator();
     const gain2 = audioCtx.createGain();
     osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(659.25, now + 0.1); // E5
-    osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.35); // E6
+    osc2.frequency.setValueAtTime(659.25, now + 0.1);
+    osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.35);
     gain2.gain.setValueAtTime(0.35, now + 0.1);
     gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
     osc2.connect(gain2);
@@ -1144,11 +1161,9 @@ function playCashoutSoundSynthesized() {
     osc2.stop(now + 0.5);
 }
 
-// RENDER RECENT PLANE MULTIPLIER HISTORY PILLS (NEWEST ON LEFT)
 function renderPlaneHistoryUI() {
     planeHistoryPills.innerHTML = '';
     
-    // Reverse array slice so latest appears first on left
     const newestFirst = planeHistory.slice().reverse();
 
     newestFirst.forEach(m => {
@@ -1167,10 +1182,7 @@ function renderPlaneHistoryUI() {
         planeHistoryPills.appendChild(pill);
     });
 
-    // Ensure scroll position starts on left
     planeHistoryPills.scrollLeft = 0;
-
-    // Render 25 history modal grid
     renderModalHistoryGrid(newestFirst);
 }
 
@@ -1535,7 +1547,7 @@ function drawFrame() {
     const maxT = Math.max(10000, last.t + 1000); 
     const speedFactor = last.m > 3.50 ? 2.2 : 1.8;
     
-    // RED TRAJECTORY LINE (ONLY DURING ACTIVE FLIGHT)
+    // RED TRAJECTORY LINE
     if (running) {
         ctx.strokeStyle = '#ff2a55';
         ctx.lineWidth = 3.5 * devicePixelRatio;
@@ -1635,7 +1647,6 @@ function logHistoryRow(round, betAmt, mult, result, payout) {
     historyTableBody.prepend(row);
 }
 
-// START TOP TIMER LINE ANIMATION
 function startTopTimerAnimation(durationMs) {
     if (topTimerInterval) clearInterval(topTimerInterval);
     const startTime = Date.now();
@@ -1672,6 +1683,8 @@ socket.on('round:waiting', ({ roundNumber, duration }) => {
     multiplierText.textContent = '1.00x';
     multiplierText.style.color = 'var(--text-primary)';
     
+    if (startMusic) startMusic.pause();
+
     startTopTimerAnimation(duration || 7000);
 
     if (isLoggedIn) {
@@ -1705,7 +1718,7 @@ socket.on('round:start', () => {
         betBtn.disabled = true;
         if (betPlaced) {
             statusText.textContent = 'Flying... Cash out anytime!';
-            cashoutBtn.disabled = false; // ENABLE CASHOUT IMMEDIATELY ON TAKEOFF
+            cashoutBtn.disabled = false;
         } else {
             statusText.textContent = 'Round in progress (no bet placed)';
             cashoutBtn.disabled = true;
@@ -1754,7 +1767,6 @@ socket.on('round:crash', ({ crashPoint: cp, history }) => {
     statusText.textContent = 'Crashed at ' + cp.toFixed(2) + 'x';
     cashoutBtn.disabled = true;
 
-    // UPDATE RECENT PLANE HISTORY STRIP (NEWEST ON LEFT)
     if (Array.isArray(history)) {
         planeHistory = history;
         renderPlaneHistoryUI();
@@ -1783,7 +1795,7 @@ socket.on('round:crash', ({ crashPoint: cp, history }) => {
     drawFrame();
 });
 
-// BET CONFIRMED -> TRANSFORM BUTTON TO CANCEL BET
+// BET CONFIRMED
 socket.on('bet:confirmed', ({ amount }) => {
     betPlaced = true;
     betBtn.disabled = false;
@@ -1792,7 +1804,7 @@ socket.on('bet:confirmed', ({ amount }) => {
     statusText.textContent = 'Bet placed — click CANCEL to abort';
 });
 
-// BET CANCELLED -> REFUND BALANCE
+// BET CANCELLED
 socket.on('bet:cancelled', ({ amount }) => {
     betPlaced = false;
     demoBalance += amount;
@@ -1802,7 +1814,7 @@ socket.on('bet:cancelled', ({ amount }) => {
     statusText.textContent = 'Bet cancelled — ₹' + amount + ' refunded';
 });
 
-// CASHOUT -> INSTANT PAYOUT & GUARANTEED SYNTHESIZED SOUND
+// CASHOUT
 socket.on('you:cashedout', ({ multiplier: m, winnings }) => {
     statusText.textContent = 'Cashed out at ' + m.toFixed(2) + 'x (+₹' + winnings + ')';
     cashoutBtn.disabled = true;
@@ -1820,7 +1832,6 @@ socket.on('you:cashedout', ({ multiplier: m, winnings }) => {
         updateProgressUI();
         logHistoryRow(roundNum, currentBetAmount, m, 'WIN', winnings);
 
-        // PLAY UNSTOPPABLE SYNTHESIZED AUDIO + WIN AUDIO FALLBACK
         playCashoutSoundSynthesized();
         if (winMusic && !isMuted) {
             winMusic.currentTime = 0;
@@ -1839,7 +1850,7 @@ function loop(){
 // BUTTON LISTENERS
 betBtn.addEventListener('click', () => {
     if (!isLoggedIn) return;
-    unlockAudio(); // Resume Web Audio API context on touch/click
+    unlockAudio();
 
     if (betPlaced) {
         socket.emit('bet:cancel');
@@ -1857,7 +1868,7 @@ betBtn.addEventListener('click', () => {
 
 cashoutBtn.addEventListener('click', () => {
     if (!isLoggedIn) return;
-    unlockAudio(); // Resume Web Audio API context on touch/click
+    unlockAudio();
     socket.emit('bet:cashout');
 });
 </script>
