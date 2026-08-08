@@ -1204,30 +1204,21 @@ function renderModalHistoryGrid(newestFirst) {
     });
 }
 
+// 🟢 CONTINUOUS SMOOTH ASCENT FORMULA FOR ALL MULTIPLIERS (NO FLAT 3.50x STOP)
 function valueToY(h, m){
     const runwayY = h - (28 * devicePixelRatio); 
-    const maxAscent = h - (100 * devicePixelRatio);
+    const topMargin = 70 * devicePixelRatio;
+    if (m <= 1.01) return runwayY;
     
-    if (m <= 1.02) return runwayY;
-    
-    const takeoffThresh = 1.02;
-    const levelThresh = 3.50;
-    
-    let progress = Math.min(1.0, (m - takeoffThresh) / (levelThresh - takeoffThresh));
-    let smoothRise = Math.sin(progress * Math.PI / 2);
-    
-    return runwayY - (smoothRise * maxAscent);
+    // Smooth continuous logarithmic ascent across ALL multipliers
+    const progress = 1 - Math.exp(-(m - 1.00) * 0.30);
+    return runwayY - (progress * (runwayY - topMargin));
 }
 
+// 🟢 CONTINUOUS NATURAL PITCH ANGLE
 function getFlightAngle(m) {
-    if (m <= 1.02 || m >= 3.50) return 0;
-    
-    const takeoffThresh = 1.02;
-    const levelThresh = 3.50;
-    let progress = (m - takeoffThresh) / (levelThresh - takeoffThresh);
-    
-    const maxAngle = -0.35; 
-    return maxAngle * Math.sin(progress * Math.PI);
+    if (m <= 1.01) return 0;
+    return -0.28 * Math.exp(-(m - 1.00) * 0.20);
 }
 
 function updateProgressUI() {
@@ -1567,7 +1558,7 @@ function drawFrame() {
     livePlaneCanvasX = planeX;
     livePlaneCanvasY = planeY;
 
-    // 🟢 100% SMOOTH CONTINUOUS TRAJECTORY LINE (ZERO ZIG-ZAG / ZERO STAIRCASE)
+    // 🟢 PERFECT CONTINUOUS QUADRATIC CURVE (SMOOTH FOR ALL MULTIPLIERS)
     if (running) {
         ctx.save();
         ctx.strokeStyle = '#ff2a55';
@@ -1580,8 +1571,7 @@ function drawFrame() {
         const originX = 0 - camX;
         const originY = valueToY(h, 1.00);
 
-        // Parabolic quadratic curve directly to plane nose
-        const controlX = originX + (planeX - originX) * 0.55;
+        const controlX = originX + (planeX - originX) * 0.50;
         const controlY = originY;
 
         ctx.moveTo(originX, originY);
@@ -1708,7 +1698,6 @@ socket.on('round:waiting', ({ roundNumber, duration }) => {
 
     if (isLoggedIn) {
         if (isNextRoundBet) {
-            // Automatically place the queued next-round bet!
             isNextRoundBet = false;
             socket.emit('bet:place', currentBetAmount);
         } else {
@@ -1831,6 +1820,11 @@ socket.on('bet:confirmed', ({ amount }) => {
     statusText.textContent = 'Bet placed — click CANCEL to abort';
 });
 
+// QUEUE CONFIRMED
+socket.on('bet:queue_confirmed', ({ amount }) => {
+    statusText.textContent = 'Bet queued for NEXT round!';
+});
+
 // BET CANCELLED
 socket.on('bet:cancelled', ({ amount }) => {
     betPlaced = false;
@@ -1880,17 +1874,15 @@ betBtn.addEventListener('click', () => {
     unlockAudio();
 
     if (running && !betPlaced) {
-        // --- Betting during flight for NEXT round ---
         if (isNextRoundBet) {
-            // Cancel queued next round bet
             isNextRoundBet = false;
             demoBalance += currentBetAmount;
             balanceEl.textContent = demoBalance;
             betBtn.textContent = 'BET (NEXT ROUND)';
             betBtn.className = 'bet-btn';
             statusText.textContent = 'Next bet cancelled — ₹' + currentBetAmount + ' refunded';
+            socket.emit('bet:cancel');
         } else {
-            // Queue bet for next round
             const amt = parseInt(betInput.value, 10);
             if (!amt || amt < 1 || amt > demoBalance) return;
             
@@ -1902,9 +1894,11 @@ betBtn.addEventListener('click', () => {
             betBtn.textContent = 'CANCEL NEXT BET';
             betBtn.className = 'bet-btn cancel-btn';
             statusText.textContent = 'Bet queued for NEXT round!';
+            
+            // 🟢 IMMEDIATELY LOG MID-FLIGHT BET QUEUE ON SERVER
+            socket.emit('bet:queue', amt);
         }
     } else {
-        // --- Normal betting during WAITING phase ---
         if (betPlaced) {
             socket.emit('bet:cancel');
         } else {
