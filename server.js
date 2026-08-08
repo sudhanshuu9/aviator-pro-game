@@ -1,152 +1,186 @@
-// ==========================================
-// Aviator Pro Backend — 100% Verified Engine
-// ==========================================
 const express = require('express');
 const http = require('http');
-const { Server } = require("socket.io");
+const { Server } = require('socket.io');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+    cors: { origin: "*" }
 });
-// Serve static files from public folder
+
+const PORT = process.env.PORT || 3000;
+
+// Serve static assets from 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
-// Serve index.html on root route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-// Game Timing (Milliseconds)
-const WAITING_TIME = 7000; // 7 seconds countdown phase
-const CRASHED_TIME = 4000; // 4 seconds crash view phase
 
-let currentState = 'waiting'; // 'waiting', 'flying', 'crashed'
-let currentMultiplier = 1.0;
-let crashPoint = 1.0;
-let roundNumber = 0;
-let gameLoopInterval = null;
+// GAME ENGINE STATE
+let gameState = 'waiting'; // 'waiting' | 'flying' | 'crashed'
+let currentMultiplier = 1.00;
+let crashPoint = 1.00;
+let roundNumber = 1;
+let history = [1.45, 2.10, 1.12, 5.40, 1.85, 3.20]; // Default starter history
+let activeBets = new Map(); // socket.id -> { amount, cashedOut, name }
+let gameTimer = null;
+let startTime = 0;
 
-// Store up to 25 recent plane crash multipliers
-const planeCrashHistory = [];
+const WAITING_TIME = 7000; // 7 seconds waiting time between rounds
 
-// Store active bets: socketId -> { amount, cashedOut }
-const activeBets = new Map();
-
+// Weighted Random Crash Point Generator
 function generateCrashPoint() {
-    const rand = Math.random();
-    if (rand < 0.05) return 1.00; // Instant crash
-    return parseFloat((1 + Math.random() * (rand > 0.85 ? 8.5 : 2.5)).toFixed(2));
+    const r = Math.random() * 100;
+    // 3% instant crash chance at 1.00x
+    if (r < 3) return 1.00;
+    
+    // Standard crash curve algorithm
+    const e = 100;
+    const h = Math.random() * (e - 1);
+    let val = Math.floor((100 * e) / (e - h)) / 100;
+    return Math.min(Math.max(val, 1.01), 120.00);
 }
 
-function startWaiting() {
-    currentState = 'waiting';
-    currentMultiplier = 1.0;
-    roundNumber++;
+// 1. WAITING PHASE
+function startWaitingPhase() {
+    gameState = 'waiting';
+    currentMultiplier = 1.00;
     activeBets.clear();
-    
-    io.emit('round:waiting', { roundNumber, duration: WAITING_TIME });
-    console.log(`[Round #${roundNumber}] Betting phase open...`);
+    roundNumber++;
 
-    setTimeout(startFlying, WAITING_TIME);
+    console.log(`\n========================================`);
+    console.log(`⏳ [ROUND #${roundNumber}] Waiting Phase Started (${WAITING_TIME / 1000}s)`);
+    console.log(`========================================`);
+
+    io.emit('round:waiting', {
+        roundNumber: roundNumber,
+        duration: WAITING_TIME
+    });
+
+    setTimeout(() => {
+        startFlyingPhase();
+    }, WAITING_TIME);
 }
 
-function startFlying() {
-    currentState = 'flying';
-    currentMultiplier = 1.0;
+// 2. FLYING PHASE
+function startFlyingPhase() {
+    gameState = 'flying';
     crashPoint = generateCrashPoint();
-    console.log(`[Round #${roundNumber}] Takeoff! Crash point: ${crashPoint}x`);
-    
-    io.emit('round:start');
+    startTime = Date.now();
+    currentMultiplier = 1.00;
 
-    gameLoopInterval = setInterval(() => {
-        currentMultiplier += 0.01;
-        const formattedMultiplier = parseFloat(currentMultiplier.toFixed(2));
+    console.log(`🚀 [ROUND #${roundNumber}] Flight Started! Target Crash: ${crashPoint.toFixed(2)}x`);
 
-        io.emit('round:tick', { multiplier: formattedMultiplier });
+    io.emit('round:start', { roundNumber });
 
-        if (formattedMultiplier >= crashPoint) {
-            clearInterval(gameLoopInterval);
-            startCrashed();
-        }
-    }, 100); 
-}
-
-function startCrashed() {
-    currentState = 'crashed';
-    console.log(`[Round #${roundNumber}] Crashed at ${crashPoint}x`);
-    
-    planeCrashHistory.push(crashPoint);
-    if (planeCrashHistory.length > 25) {
-        planeCrashHistory.shift();
-    }
-
-    io.emit('round:crash', { crashPoint, history: planeCrashHistory });
-    
-    setTimeout(startWaiting, CRASHED_TIME);
-}
-
-// Socket Connection Handler
-io.on('connection', (socket) => {
-    socket.emit('init:history', { history: planeCrashHistory });
-
-    if (currentState === 'waiting') {
-        socket.emit('round:waiting', { roundNumber, duration: WAITING_TIME });
-    } else if (currentState === 'flying') {
-        socket.emit('round:start');
-    }
-
-    // Place Bet
-    socket.on('bet:place', (betData) => {
-        if (currentState !== 'waiting') return;
+    gameTimer = setInterval(() => {
+        const elapsedSec = (Date.now() - startTime) / 1000;
         
-        const amount = typeof betData === 'object' ? betData.amount : parseInt(betData, 10);
-        if (isNaN(amount) || amount < 1) return;
+        // Exponential multiplier progression formula
+        currentMultiplier = Number((1.00 + 0.06 * Math.pow(elapsedSec, 1.85)).toFixed(2));
 
-        activeBets.set(socket.id, { amount, cashedOut: false });
-        socket.emit('bet:confirmed', { amount });
+        if (currentMultiplier >= crashPoint) {
+            triggerCrash();
+        } else {
+            io.emit('round:tick', { multiplier: currentMultiplier });
+        }
+    }, 100);
+}
+
+// 3. CRASH PHASE
+function triggerCrash() {
+    clearInterval(gameTimer);
+    gameState = 'crashed';
+    currentMultiplier = crashPoint;
+
+    // Add to history (keep max 25 entries)
+    history.push(Number(crashPoint.toFixed(2)));
+    if (history.length > 25) history.shift();
+
+    console.log(`💥 [ROUND #${roundNumber}] CRASHED at ${crashPoint.toFixed(2)}x!`);
+
+    io.emit('round:crash', {
+        crashPoint: crashPoint,
+        history: history
     });
 
-    // Cancel Bet (Before Takeoff)
-    socket.on('bet:cancel', () => {
-        if (currentState !== 'waiting') return;
+    setTimeout(() => {
+        startWaitingPhase();
+    }, 3500);
+}
 
+// SOCKET.IO REAL-TIME CONNECTIONS
+io.on('connection', (socket) => {
+    socket.playerName = 'Guest Pilot';
+
+    // Send history on join
+    socket.emit('init:history', { history });
+
+    // Send current round state if joining mid-game
+    if (gameState === 'waiting') {
+        socket.emit('round:waiting', { roundNumber, duration: WAITING_TIME });
+    }
+
+    // 🟢 LISTEN: Player logs in
+    socket.on('player:login', (data) => {
+        socket.playerName = (data && data.name) ? data.name.trim() : 'Pilot';
+        console.log(`🟢 [LOGIN] Player "${socket.playerName}" logged in! (Socket ID: ${socket.id})`);
+    });
+
+    // 💰 LISTEN: Place Bet
+    socket.on('bet:place', (amount) => {
+        if (gameState !== 'waiting') return;
+        const betAmt = parseInt(amount, 10);
+        if (isNaN(betAmt) || betAmt <= 0) return;
+
+        activeBets.set(socket.id, {
+            amount: betAmt,
+            cashedOut: false,
+            name: socket.playerName
+        });
+
+        console.log(`💰 [BET] ${socket.playerName} placed a bet of ₹${betAmt}`);
+        socket.emit('bet:confirmed', { amount: betAmt });
+    });
+
+    // ❌ LISTEN: Cancel Bet
+    socket.on('bet:cancel', () => {
+        if (gameState !== 'waiting') return;
         const playerBet = activeBets.get(socket.id);
-        if (playerBet && !playerBet.cashedOut) {
-            const refundedAmount = playerBet.amount;
+        if (playerBet) {
             activeBets.delete(socket.id);
-            socket.emit('bet:cancelled', { amount: refundedAmount });
+            console.log(`❌ [CANCEL] ${socket.playerName} cancelled bet of ₹${playerBet.amount}`);
+            socket.emit('bet:cancelled', { amount: playerBet.amount });
         }
     });
 
-    // Cash Out (During Flight)
+    // 🎉 LISTEN: Cash Out
     socket.on('bet:cashout', () => {
-        if (currentState !== 'flying') return;
-
+        if (gameState !== 'flying') return;
         const playerBet = activeBets.get(socket.id);
-        if (!playerBet || playerBet.cashedOut) return;
 
-        const liveMultiplier = parseFloat(currentMultiplier.toFixed(2));
-        const winnings = Math.floor(playerBet.amount * liveMultiplier);
+        if (playerBet && !playerBet.cashedOut) {
+            playerBet.cashedOut = true;
+            const winnings = Math.floor(playerBet.amount * currentMultiplier);
 
-        playerBet.cashedOut = true;
+            console.log(`🎉 [CASHOUT] ${socket.playerName} cashed out at ${currentMultiplier.toFixed(2)}x (+₹${winnings})`);
 
-        socket.emit('you:cashedout', { multiplier: liveMultiplier, winnings });
+            socket.emit('you:cashedout', {
+                multiplier: currentMultiplier,
+                winnings: winnings
+            });
+        }
     });
 
+    // 🔴 LISTEN: Disconnect / Tab Close
     socket.on('disconnect', () => {
+        console.log(`🔴 [DISCONNECT] Player "${socket.playerName}" left the game.`);
         activeBets.delete(socket.id);
     });
 });
 
-// Start Game Engine
-startWaiting();
-
-const PORT = process.env.PORT || 3000;
+// START EXPRESS SERVER & GAME LOOP
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`\n========================================`);
+    console.log(`🚀 AVIATOR PRO SERVER LIVE ON PORT ${PORT}`);
+    console.log(`========================================\n`);
+    startWaitingPhase();
 });
