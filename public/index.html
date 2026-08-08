@@ -930,6 +930,7 @@ const socket = io();
 
 let targetMultiplier = 1.0;
 let displayMultiplier = 1.0;
+let isNextRoundBet = false; // Queue bet for next round while flying
 let crashPoint = null;
 let running = false;
 let betPlaced = false;
@@ -1465,7 +1466,7 @@ function drawFrame() {
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    // 60 FPS Multiplier Smooth Lerp (Fixes Number Hanging/Stuttering)
+    // 60 FPS Multiplier Smooth Lerp
     if (running) {
         displayMultiplier += (targetMultiplier - displayMultiplier) * 0.25;
         const showVal = displayMultiplier <= 1.02 ? 1.00 : displayMultiplier;
@@ -1554,7 +1555,7 @@ function drawFrame() {
     const maxT = Math.max(10000, last.t + 1000); 
     const speedFactor = last.m > 3.50 ? 2.2 : 1.8;
     
-    // SMOOTH RED TRAJECTORY LINE (Quadratic Bezier Curve + Round Joins)
+    // SMOOTH RED TRAJECTORY LINE (Quadratic Bezier Curve)
     if (running && points.length > 1) {
         ctx.save();
         ctx.strokeStyle = '#ff2a55';
@@ -1711,10 +1712,16 @@ socket.on('round:waiting', ({ roundNumber, duration }) => {
     startTopTimerAnimation(duration || 7000);
 
     if (isLoggedIn) {
-        statusText.textContent = 'Betting open — place your bet';
-        betBtn.disabled = false;
-        betBtn.textContent = 'Bet';
-        betBtn.className = 'bet-btn';
+        if (isNextRoundBet) {
+            // Automatically place the queued next-round bet!
+            isNextRoundBet = false;
+            socket.emit('bet:place', currentBetAmount);
+        } else {
+            statusText.textContent = 'Betting open — place your bet';
+            betBtn.disabled = false;
+            betBtn.textContent = 'Bet';
+            betBtn.className = 'bet-btn';
+        }
     }
     
     cashoutBtn.disabled = true;
@@ -1724,7 +1731,7 @@ socket.on('round:waiting', ({ roundNumber, duration }) => {
     liveProfitPill.classList.remove('active');
     drawFrame();
 
-    if (isLoggedIn && autoBetToggle.checked && !betPlaced) {
+    if (isLoggedIn && autoBetToggle.checked && !betPlaced && !isNextRoundBet) {
         setTimeout(() => {
             if (!betPlaced) betBtn.click();
         }, 300);
@@ -1740,12 +1747,21 @@ socket.on('round:start', () => {
     topTimerFill.style.width = '0%';
     
     if (isLoggedIn) {
-        betBtn.disabled = true;
         if (betPlaced) {
+            betBtn.disabled = true;
             statusText.textContent = 'Flying... Cash out anytime!';
             cashoutBtn.disabled = false;
         } else {
-            statusText.textContent = 'Round in progress (no bet placed)';
+            betBtn.disabled = false;
+            if (isNextRoundBet) {
+                betBtn.textContent = 'CANCEL NEXT BET';
+                betBtn.className = 'bet-btn cancel-btn';
+                statusText.textContent = 'Bet queued for NEXT round!';
+            } else {
+                betBtn.textContent = 'BET (NEXT ROUND)';
+                betBtn.className = 'bet-btn';
+                statusText.textContent = 'Round in progress';
+            }
             cashoutBtn.disabled = true;
         }
     }
@@ -1868,17 +1884,44 @@ betBtn.addEventListener('click', () => {
     if (!isLoggedIn) return;
     unlockAudio();
 
-    if (betPlaced) {
-        socket.emit('bet:cancel');
-    } else {
-        const amt = parseInt(betInput.value, 10);
-        if (!amt || amt < 1 || amt > demoBalance) return;
-        
-        currentBetAmount = amt;
-        demoBalance -= amt;
-        balanceEl.textContent = demoBalance;
+    if (running && !betPlaced) {
+        // --- Betting during flight for NEXT round ---
+        if (isNextRoundBet) {
+            // Cancel queued next round bet
+            isNextRoundBet = false;
+            demoBalance += currentBetAmount;
+            balanceEl.textContent = demoBalance;
+            betBtn.textContent = 'BET (NEXT ROUND)';
+            betBtn.className = 'bet-btn';
+            statusText.textContent = 'Next bet cancelled — ₹' + currentBetAmount + ' refunded';
+        } else {
+            // Queue bet for next round
+            const amt = parseInt(betInput.value, 10);
+            if (!amt || amt < 1 || amt > demoBalance) return;
+            
+            currentBetAmount = amt;
+            demoBalance -= amt;
+            balanceEl.textContent = demoBalance;
 
-        socket.emit('bet:place', amt);
+            isNextRoundBet = true;
+            betBtn.textContent = 'CANCEL NEXT BET';
+            betBtn.className = 'bet-btn cancel-btn';
+            statusText.textContent = 'Bet queued for NEXT round!';
+        }
+    } else {
+        // --- Normal betting during WAITING phase ---
+        if (betPlaced) {
+            socket.emit('bet:cancel');
+        } else {
+            const amt = parseInt(betInput.value, 10);
+            if (!amt || amt < 1 || amt > demoBalance) return;
+            
+            currentBetAmount = amt;
+            demoBalance -= amt;
+            balanceEl.textContent = demoBalance;
+
+            socket.emit('bet:place', amt);
+        }
     }
 });
 
