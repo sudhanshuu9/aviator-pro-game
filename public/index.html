@@ -1004,15 +1004,9 @@ function triggerDownload() {
 function setBet(amt) { betInput.value = amt; }
 function setPreset(val) { autoCashoutInput.value = val.toFixed(1); }
 
-// FIXED: HiDPI CANVAS RESIZING WITH CTX.SCALE TO ELIMINATE ZIG-ZAG STEPPING
 function resizeCanvas(){
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
-    if (canvas.width !== displayWidth * devicePixelRatio || canvas.height !== displayHeight * devicePixelRatio) {
-        canvas.width = displayWidth * devicePixelRatio;
-        canvas.height = displayHeight * devicePixelRatio;
-        ctx.scale(devicePixelRatio, devicePixelRatio);
-    }
+    canvas.width = canvas.clientWidth * devicePixelRatio;
+    canvas.height = canvas.clientHeight * devicePixelRatio;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -1067,11 +1061,12 @@ function playCashoutSoundSynthesized() {
 
     const now = audioCtx.currentTime;
 
+    // First Tone
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(523.25, now);
-    osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
+    osc1.frequency.setValueAtTime(523.25, now); // C5
+    osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25); // C6
     gain1.gain.setValueAtTime(0.3, now);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
     osc1.connect(gain1);
@@ -1079,11 +1074,12 @@ function playCashoutSoundSynthesized() {
     osc1.start(now);
     osc1.stop(now + 0.4);
 
+    // Second Tone
     const osc2 = audioCtx.createOscillator();
     const gain2 = audioCtx.createGain();
     osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(659.25, now + 0.1);
-    osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.35);
+    osc2.frequency.setValueAtTime(659.25, now + 0.1); // E5
+    osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.35); // E6
     gain2.gain.setValueAtTime(0.35, now + 0.1);
     gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
     osc2.connect(gain2);
@@ -1112,13 +1108,14 @@ function renderPlaneHistoryUI() {
         planeHistoryPills.appendChild(pill);
     });
 
+    // Auto-scroll to latest entry
     planeHistoryPills.scrollLeft = planeHistoryPills.scrollWidth;
 }
 
-// FIXED: INFINITE CONTINUOUS LOGARITHMIC CURVE (NO KINKS)
+// FIXED: INFINITE CONTINUOUS LOGARITHMIC CURVE (NO FLAT 3.50x KINK)
 function valueToY(h, m){
-    const runwayY = h - 28; 
-    const topMargin = 70;
+    const runwayY = h - (28 * devicePixelRatio); 
+    const topMargin = 70 * devicePixelRatio;
     
     if (m <= 1.01) return runwayY;
     
@@ -1165,17 +1162,17 @@ function updateProgressUI() {
 
 function triggerExplosionFX(x, y) {
     explosionParticles = [];
-    shockwaveRadius = 5;
+    shockwaveRadius = 5 * devicePixelRatio;
     
     for (let i = 0; i < 50; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 1.2 + Math.random() * 5; 
+        const speed = (1.2 + Math.random() * 5) * devicePixelRatio; 
         explosionParticles.push({
             x: x,
             y: y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            size: 5 + Math.random() * 9,
+            size: (5 + Math.random() * 9) * devicePixelRatio,
             alpha: 1.0,
             decay: 0.012 + Math.random() * 0.01, 
             color: Math.random() > 0.4 ? '#ff2a55' : (Math.random() > 0.5 ? '#ffb703' : '#ffffff')
@@ -1186,21 +1183,21 @@ function triggerExplosionFX(x, y) {
 function drawProceduralExplosion(ctx) {
     if (shockwaveRadius <= 0) return;
 
-    if (shockwaveRadius < 140) {
+    if (shockwaveRadius < 140 * devicePixelRatio) {
         ctx.save();
-        ctx.strokeStyle = `rgba(255, 42, 85, ${Math.max(0, 1 - shockwaveRadius / 140)})`;
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = `rgba(255, 42, 85, ${Math.max(0, 1 - shockwaveRadius / (140 * devicePixelRatio))})`;
+        ctx.lineWidth = 4 * devicePixelRatio;
         ctx.beginPath();
         ctx.arc(livePlaneCanvasX, livePlaneCanvasY, shockwaveRadius, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
-        shockwaveRadius += 2.5; 
+        shockwaveRadius += 2.5 * devicePixelRatio; 
     }
 
     if (explosionParticles.length > 0 && explosionParticles[0].alpha > 0.05) {
         const coreGrad = ctx.createRadialGradient(
             livePlaneCanvasX, livePlaneCanvasY, 0,
-            livePlaneCanvasX, livePlaneCanvasY, 75
+            livePlaneCanvasX, livePlaneCanvasY, 75 * devicePixelRatio
         );
         coreGrad.addColorStop(0, '#ffffff');
         coreGrad.addColorStop(0.3, '#ffb703');
@@ -1210,7 +1207,7 @@ function drawProceduralExplosion(ctx) {
         ctx.save();
         ctx.fillStyle = coreGrad;
         ctx.beginPath();
-        ctx.arc(livePlaneCanvasX, livePlaneCanvasY, 75, 0, Math.PI * 2);
+        ctx.arc(livePlaneCanvasX, livePlaneCanvasY, 75 * devicePixelRatio, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
@@ -1221,7 +1218,7 @@ function drawProceduralExplosion(ctx) {
         ctx.globalAlpha = p.alpha;
         ctx.fillStyle = p.color;
         ctx.shadowColor = p.color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 12 * devicePixelRatio;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
@@ -1248,12 +1245,12 @@ function drawSmokyStormClouds(ctx, w, horizonY) {
     
     for (let layer = 0; layer < 3; layer++) {
         ctx.fillStyle = cloudColors[layer];
-        const drift = Math.sin(time + layer) * 20;
+        const drift = Math.sin(time + layer) * (20 * devicePixelRatio);
         
         ctx.beginPath();
-        for (let x = -50; x <= w + 50; x += 60) {
-            const puffRadius = 55 + Math.sin(x * 0.01 + layer) * 20;
-            const puffY = 15 + layer * 18 + Math.cos(x * 0.02 + drift) * 10;
+        for (let x = -50 * devicePixelRatio; x <= w + 50 * devicePixelRatio; x += 60 * devicePixelRatio) {
+            const puffRadius = (55 + Math.sin(x * 0.01 + layer) * 20) * devicePixelRatio;
+            const puffY = (15 + layer * 18 + Math.cos(x * 0.02 + drift) * 10) * devicePixelRatio;
             ctx.arc(x + drift, puffY, puffRadius, 0, Math.PI * 2);
         }
         ctx.fill();
@@ -1277,14 +1274,14 @@ function drawAnimatedOcean(ctx, w, h, horizonY, camX) {
 
     const time = Date.now() * 0.003;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.5 * devicePixelRatio;
 
     for (let row = 1; row <= 4; row++) {
-        const yPos = horizonY + (row * 14);
+        const yPos = horizonY + (row * 14 * devicePixelRatio);
         if (yPos >= h) break;
         ctx.beginPath();
-        for (let x = 0; x <= w; x += 18) {
-            const waveY = yPos + Math.sin((x + camX + time * 120 * row) * 0.02) * (2 * row);
+        for (let x = 0; x <= w; x += 18 * devicePixelRatio) {
+            const waveY = yPos + Math.sin((x + camX + time * 120 * row) * 0.02) * (2 * row * devicePixelRatio);
             if (x === 0) ctx.moveTo(x, waveY);
             else ctx.lineTo(x, waveY);
         }
@@ -1292,7 +1289,7 @@ function drawAnimatedOcean(ctx, w, h, horizonY, camX) {
     }
 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * devicePixelRatio;
     ctx.beginPath();
     ctx.moveTo(0, horizonY);
     ctx.lineTo(w, horizonY);
@@ -1301,16 +1298,16 @@ function drawAnimatedOcean(ctx, w, h, horizonY, camX) {
 
 function drawPinkLightning(ctx, endX, endY) {
     ctx.save();
-    const startX = endX - 30 + (Math.random() * 60);
-    const startY = 10;
+    const startX = endX - (30 * devicePixelRatio) + (Math.random() * 60 * devicePixelRatio);
+    const startY = 10 * devicePixelRatio;
 
     ctx.fillStyle = `rgba(236, 72, 153, ${lightningAlpha})`;
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.strokeStyle = '#ec4899';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 5 * devicePixelRatio;
     ctx.shadowColor = '#ff007f';
-    ctx.shadowBlur = 25;
+    ctx.shadowBlur = 25 * devicePixelRatio;
     ctx.beginPath();
     
     let curX = startX;
@@ -1320,7 +1317,7 @@ function drawPinkLightning(ctx, endX, endY) {
     const segments = 10;
     for (let i = 1; i <= segments; i++) {
         const nextY = startY + (endY - startY) * (i / segments);
-        const nextX = startX + (endX - startX) * (i / segments) + (Math.random() - 0.5) * 45;
+        const nextX = startX + (endX - startX) * (i / segments) + (Math.random() - 0.5) * 45 * devicePixelRatio;
         ctx.lineTo(nextX, nextY);
         curX = nextX;
         curY = nextY;
@@ -1329,54 +1326,53 @@ function drawPinkLightning(ctx, endX, endY) {
     ctx.stroke();
 
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * devicePixelRatio;
     ctx.stroke();
     ctx.restore();
 }
 
 function drawSpectators(ctx, x, y, isFlying) {
     const time = Date.now() * 0.008;
-    const bounce1 = isFlying ? Math.abs(Math.sin(time * 2)) * 10 : 0;
-    const bounce2 = isFlying ? Math.abs(Math.sin(time * 2 + 1.2)) * 10 : 0;
+    const bounce1 = isFlying ? Math.abs(Math.sin(time * 2)) * (10 * devicePixelRatio) : 0;
+    const bounce2 = isFlying ? Math.abs(Math.sin(time * 2 + 1.2)) * (10 * devicePixelRatio) : 0;
     const armWiggle = isFlying ? Math.sin(time * 3) * 0.4 : 0;
 
     ctx.save();
     ctx.translate(x, y - bounce1);
     ctx.fillStyle = '#fbcfe8';
-    ctx.beginPath(); ctx.arc(0, -32, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ec4899'; ctx.fillRect(-3.5, -26, 7, 10);
-    ctx.fillStyle = '#db2777'; ctx.fillRect(-3.5, -15, 7, 6);
+    ctx.beginPath(); ctx.arc(0, -32 * devicePixelRatio, 4.5 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ec4899'; ctx.fillRect(-3.5 * devicePixelRatio, -26 * devicePixelRatio, 7 * devicePixelRatio, 10 * devicePixelRatio);
+    ctx.fillStyle = '#db2777'; ctx.fillRect(-3.5 * devicePixelRatio, -15 * devicePixelRatio, 7 * devicePixelRatio, 6 * devicePixelRatio);
     ctx.fillStyle = '#fbcfe8';
-    ctx.fillRect(-3, -9, 2.5, 9);
-    ctx.fillRect(0.5, -9, 2.5, 9);
-    ctx.strokeStyle = '#fbcfe8'; ctx.lineWidth = 2; ctx.beginPath();
-    ctx.moveTo(-3.5, -24); ctx.lineTo(-8, -34 + armWiggle * 5);
-    ctx.moveTo(3.5, -24); ctx.lineTo(8, -34 - armWiggle * 5);
+    ctx.fillRect(-3 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
+    ctx.fillRect(0.5 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
+    ctx.strokeStyle = '#fbcfe8'; ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath();
+    ctx.moveTo(-3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(-8 * devicePixelRatio, (-34 + armWiggle * 5) * devicePixelRatio);
+    ctx.moveTo(3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(8 * devicePixelRatio, (-34 - armWiggle * 5) * devicePixelRatio);
     ctx.stroke(); ctx.restore();
 
     ctx.save();
-    ctx.translate(x + 16, y - bounce2);
+    ctx.translate(x + (16 * devicePixelRatio), y - bounce2);
     ctx.fillStyle = '#fde047';
-    ctx.beginPath(); ctx.arc(0, -32, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#18181b'; ctx.fillRect(-3.5, -26, 7, 10);
-    ctx.fillStyle = '#09090b'; ctx.fillRect(-3.5, -15, 7, 6);
+    ctx.beginPath(); ctx.arc(0, -32 * devicePixelRatio, 4.5 * devicePixelRatio, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#18181b'; ctx.fillRect(-3.5 * devicePixelRatio, -26 * devicePixelRatio, 7 * devicePixelRatio, 10 * devicePixelRatio);
+    ctx.fillStyle = '#09090b'; ctx.fillRect(-3.5 * devicePixelRatio, -15 * devicePixelRatio, 7 * devicePixelRatio, 6 * devicePixelRatio);
     ctx.fillStyle = '#fde047';
-    ctx.fillRect(-3, -9, 2.5, 9);
-    ctx.fillRect(0.5, -9, 2.5, 9);
-    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; ctx.beginPath();
-    ctx.moveTo(-3.5, -24); ctx.lineTo(-8, -34 - armWiggle * 5);
-    ctx.moveTo(3.5, -24); ctx.lineTo(8, -34 + armWiggle * 5);
+    ctx.fillRect(-3 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
+    ctx.fillRect(0.5 * devicePixelRatio, -9 * devicePixelRatio, 2.5 * devicePixelRatio, 9 * devicePixelRatio);
+    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath();
+    ctx.moveTo(-3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(-8 * devicePixelRatio, (-34 - armWiggle * 5) * devicePixelRatio);
+    ctx.moveTo(3.5 * devicePixelRatio, -24 * devicePixelRatio); ctx.lineTo(8 * devicePixelRatio, (-34 + armWiggle * 5) * devicePixelRatio);
     ctx.stroke(); ctx.restore();
 }
 
 function drawFrame() {
-    // USE LOGICAL CSS PIXELS FOR SMOOTH SUB-PIXEL RENDERING
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
+    const w = canvas.width;
+    const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
     let camX = 0;
-    const speedFactor = 1.8; 
+    const speedFactor = 1.8; // FIXED CONSTANT SPEEDFACTOR TO PREVENT BENDS
     if (points.length > 0 && (running || triggerLightningFX)) {
         const last = points[points.length - 1];
         const maxT = Math.max(10000, last.t + 1000); 
@@ -1397,51 +1393,51 @@ function drawFrame() {
     ctx.fillRect(0, 0, w, horizonY);
 
     const sunX = (w * 0.45) - (camX * 0.1); 
-    const sunGrad = ctx.createRadialGradient(sunX, horizonY, 3, sunX, horizonY, 75);
+    const sunGrad = ctx.createRadialGradient(sunX, horizonY, 3 * devicePixelRatio, sunX, horizonY, 75 * devicePixelRatio);
     sunGrad.addColorStop(0, '#ffffff');
     sunGrad.addColorStop(0.2, 'rgba(254, 240, 138, 0.9)');
     sunGrad.addColorStop(0.6, 'rgba(249, 115, 22, 0.4)');
     sunGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
     ctx.fillStyle = sunGrad;
     ctx.beginPath();
-    ctx.arc(sunX, horizonY, 75, 0, Math.PI * 2);
+    ctx.arc(sunX, horizonY, 75 * devicePixelRatio, 0, Math.PI * 2);
     ctx.fill();
 
     drawSmokyStormClouds(ctx, w, horizonY);
     drawAnimatedOcean(ctx, w, h, horizonY, camX);
 
     const runwayX = -camX;
-    const runwayWidth = 220;
-    const runwayHeight = 18;
-    const runwayY = h - runwayHeight - 8;
+    const runwayWidth = 220 * devicePixelRatio;
+    const runwayHeight = 18 * devicePixelRatio;
+    const runwayY = h - runwayHeight - (8 * devicePixelRatio);
 
     if (runwayX + runwayWidth > -50) {
         ctx.fillStyle = '#064e3b';
-        for (let x = runwayX; x < runwayX + runwayWidth; x += 6) {
-            const treeH = 18 + (Math.abs(x) % 11) * 2.4;
+        for (let x = runwayX; x < runwayX + runwayWidth; x += 6 * devicePixelRatio) {
+            const treeH = (18 + (Math.abs(x) % 11) * 2.4) * devicePixelRatio;
             ctx.beginPath();
             ctx.moveTo(x, horizonY);
-            ctx.lineTo(x + 3.5, horizonY - treeH);
-            ctx.lineTo(x + 7, horizonY);
+            ctx.lineTo(x + 3.5 * devicePixelRatio, horizonY - treeH);
+            ctx.lineTo(x + 7 * devicePixelRatio, horizonY);
             ctx.closePath();
             ctx.fill();
         }
 
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.roundRect(runwayX, runwayY, runwayWidth, runwayHeight, [0, 8, 8, 0]);
+        ctx.roundRect(runwayX, runwayY, runwayWidth, runwayHeight, [0, 8 * devicePixelRatio, 8 * devicePixelRatio, 0]);
         ctx.fill();
 
         ctx.strokeStyle = '#f8fafc';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([10, 10]);
+        ctx.lineWidth = 2 * devicePixelRatio;
+        ctx.setLineDash([10 * devicePixelRatio, 10 * devicePixelRatio]);
         ctx.beginPath();
-        ctx.moveTo(runwayX + 8, runwayY + runwayHeight / 2);
-        ctx.lineTo(runwayX + runwayWidth - 12, runwayY + runwayHeight / 2);
+        ctx.moveTo(runwayX + 8 * devicePixelRatio, runwayY + runwayHeight / 2);
+        ctx.lineTo(runwayX + runwayWidth - 12 * devicePixelRatio, runwayY + runwayHeight / 2);
         ctx.stroke();
         ctx.setLineDash([]); 
 
-        drawSpectators(ctx, runwayX + 40, runwayY - 8, running);
+        drawSpectators(ctx, runwayX + (40 * devicePixelRatio), runwayY - (8 * devicePixelRatio), running);
     }
 
     if (points.length === 0) return;
@@ -1449,15 +1445,12 @@ function drawFrame() {
     const last = points[points.length - 1];
     const maxT = Math.max(10000, last.t + 1000); 
     
-    // FIXED: BUTTERY-SMOOTH ANTI-ALIASED RED TRAJECTORY LINE
+    // RED TRAJECTORY LINE (OPTIMIZED DYNAMIC ARRAY REDUCES MULTI-PHONE LAG)
     if (running) {
-        ctx.save();
         ctx.strokeStyle = '#ff2a55';
-        ctx.lineWidth = 3.5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3.5 * devicePixelRatio;
         ctx.shadowColor = '#ff2a55';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 10 * devicePixelRatio;
         ctx.beginPath();
         for (let i = 0; i < points.length; i++) {
             const p = points[i];
@@ -1468,7 +1461,7 @@ function drawFrame() {
             else ctx.lineTo(px, py);
         }
         ctx.stroke();
-        ctx.restore(); 
+        ctx.shadowBlur = 0; 
     }
 
     // JET SPRITE & FLAME
@@ -1481,8 +1474,8 @@ function drawFrame() {
         livePlaneCanvasX = x;
         livePlaneCanvasY = y;
 
-        const planeW = 95;
-        const planeH = 95;
+        const planeW = 95 * devicePixelRatio;
+        const planeH = 95 * devicePixelRatio;
 
         const tailX = -planeW * 0.42;
         const tailY = planeH * 0.04;
@@ -1491,7 +1484,7 @@ function drawFrame() {
         ctx.translate(x, y);
         ctx.rotate(angle);
 
-        const flameLen = 34 + Math.random() * 16;
+        const flameLen = (34 + Math.random() * 16) * devicePixelRatio;
 
         const outerFlame = ctx.createLinearGradient(tailX - flameLen, tailY, tailX, tailY);
         outerFlame.addColorStop(0, 'rgba(239, 68, 68, 0)');
@@ -1500,9 +1493,9 @@ function drawFrame() {
 
         ctx.fillStyle = outerFlame;
         ctx.beginPath();
-        ctx.moveTo(tailX + 4, tailY - 6);
+        ctx.moveTo(tailX + (4 * devicePixelRatio), tailY - (6 * devicePixelRatio));
         ctx.lineTo(tailX - flameLen, tailY);
-        ctx.lineTo(tailX + 4, tailY + 6);
+        ctx.lineTo(tailX + (4 * devicePixelRatio), tailY + (6 * devicePixelRatio));
         ctx.closePath();
         ctx.fill();
 
@@ -1512,16 +1505,16 @@ function drawFrame() {
 
         ctx.fillStyle = coreFlame;
         ctx.beginPath();
-        ctx.moveTo(tailX + 2, tailY - 2.5);
+        ctx.moveTo(tailX + (2 * devicePixelRatio), tailY - (2.5 * devicePixelRatio));
         ctx.lineTo(tailX - (flameLen * 0.5), tailY);
-        ctx.lineTo(tailX + 2, tailY + 2.5);
+        ctx.lineTo(tailX + (2 * devicePixelRatio), tailY + (2.5 * devicePixelRatio));
         ctx.closePath();
         ctx.fill();
 
         if (plane2Img.complete && plane2Img.naturalWidth > 0) {
             ctx.drawImage(plane2Img, -planeW/2, -planeH/2, planeW, planeH);
         } else {
-            ctx.font = '58px sans-serif';
+            ctx.font = `${58 * devicePixelRatio}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('✈️', 0, 0);
@@ -1529,6 +1522,7 @@ function drawFrame() {
         ctx.restore();
     }
 
+    // EXPLOSION & LIGHTNING FX
     if (triggerLightningFX && lightningAlpha > 0) {
         drawPinkLightning(ctx, livePlaneCanvasX, livePlaneCanvasY);
         drawProceduralExplosion(ctx);
@@ -1551,6 +1545,7 @@ function logHistoryRow(round, betAmt, mult, result, payout) {
     historyTableBody.prepend(row);
 }
 
+// START TOP TIMER LINE ANIMATION
 function startTopTimerAnimation(durationMs) {
     if (topTimerInterval) clearInterval(topTimerInterval);
     const startTime = Date.now();
@@ -1567,6 +1562,7 @@ function startTopTimerAnimation(durationMs) {
     }, 50);
 }
 
+// SOCKET EVENTS
 socket.on('init:history', ({ history }) => {
     if (Array.isArray(history)) {
         planeHistory = history;
@@ -1641,6 +1637,7 @@ socket.on('round:tick', ({ multiplier: m }) => {
     multiplierText.textContent = displayMultiplier.toFixed(2) + 'x';
     
     points.push({ t: performance.now() - startTime, m });
+    // FIXED: PREVENTS CANVAS OVERFLOW AND MULTI-DEVICE HANGING
     if (points.length > 90) points.shift();
 
     if (isLoggedIn && betPlaced && !cashedOut && running) {
