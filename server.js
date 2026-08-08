@@ -104,13 +104,14 @@ io.on('connection', (socket) => {
         socket.emit('round:waiting', { roundNumber, duration: WAITING_TIME });
     }
 
-    // 🟢 LOGS PLAYER LOGIN
+    // 🟢 MULTI-PLAYER ROBUST LOGIN HANDLER
     socket.on('player:login', (data) => {
-        socket.playerName = (data && data.name) ? data.name.trim() : 'Pilot';
-        console.log(`🟢 [LOGIN] Player "${socket.playerName}" logged in! (Socket ID: ${socket.id})`);
+        if (data && data.name) {
+            socket.playerName = data.name.trim();
+        }
+        console.log(`🟢 [LOGIN] Player "${socket.playerName}" logged in successfully! (Socket ID: ${socket.id})`);
     });
 
-    // 💰 LOGS BET PLACED (WAITING PHASE)
     socket.on('bet:place', (amount) => {
         const betAmt = parseInt(amount, 10);
         if (isNaN(betAmt) || betAmt <= 0) return;
@@ -125,7 +126,6 @@ io.on('connection', (socket) => {
         socket.emit('bet:confirmed', { amount: betAmt });
     });
 
-    // 💰 LOGS BET QUEUED MID-FLIGHT (NEXT ROUND)
     socket.on('bet:queue', (amount) => {
         const betAmt = parseInt(amount, 10);
         if (isNaN(betAmt) || betAmt <= 0) return;
@@ -134,7 +134,6 @@ io.on('connection', (socket) => {
         socket.emit('bet:queue_confirmed', { amount: betAmt });
     });
 
-    // ❌ LOGS BET CANCELLED
     socket.on('bet:cancel', () => {
         const playerBet = activeBets.get(socket.id);
         const betAmt = playerBet ? playerBet.amount : 'bet';
@@ -143,7 +142,6 @@ io.on('connection', (socket) => {
         socket.emit('bet:cancelled', { amount: betAmt });
     });
 
-    // 🎉 LOGS CASHOUT INSTANTLY
     socket.on('bet:cashout', () => {
         if (gameState !== 'flying') return;
         const playerBet = activeBets.get(socket.id);
