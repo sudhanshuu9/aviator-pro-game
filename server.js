@@ -15,12 +15,12 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
+// Serve static files from public folder
 app.use(express.static(path.join(__dirname, 'public')));
-// Force Express to serve index.html for any incoming web request
-app.get('*', (req, res) => {
+// Serve index.html on root route
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 // Game Timing (Milliseconds)
 const WAITING_TIME = 7000; // 7 seconds countdown phase
 const CRASHED_TIME = 4000; // 4 seconds crash view phase
